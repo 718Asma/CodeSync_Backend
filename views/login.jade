@@ -1,0 +1,16 @@
+h1 Log In
+form(action="", method="POST")
+    label(for="username") Username
+    input(name="username", placeholder="username", type="text" required autofocus)
+    label(for="password") Password
+    input(name="password", type="password" required)
+    button Log In
+
+p Don't have an account?
+a(href="/auth/signup") Sign Up
+
+// error arr will be passed from the server
+if errors
+    ul
+        for error in errors
+            li= error.msg

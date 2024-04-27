@@ -1,0 +1,17 @@
+h1 Sign Up 
+form(action="", method="POST")
+    label(for="fullName") Full Name
+    input(name="fullName", placeholder="Full Name", type="text" autofocus="" required) 
+    label(for="username") Username
+    input(name="username", placeholder="username", type="text" required)
+    label(for="password") Password
+    input(name="password", type="password" required)
+    label(for="confirm_password") Confirm Password
+    input(name="confirm_password", type="password" required)
+    button Sign Up
+
+    // error arr will be passed from the server
+    if errors
+        ul
+            for error in errors
+                li= error.msg
