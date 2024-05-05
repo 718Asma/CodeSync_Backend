@@ -6,7 +6,8 @@ const userSchema = new Schema({
     fullName: { type: String, required: true, maxLength: 100, minLength: 3 },
     username: { type: String, maxLength: 100, unique: true, minLength: 3 },
     password: { type: String, maxLength: 100, minLength: 8 },
-    googleId: { type: String },
+    googleId: { type: String, unique: true },
+    friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
 });
 
 // Virtual for user's URL

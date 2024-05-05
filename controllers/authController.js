@@ -1,6 +1,7 @@
 const User = require("../models/user");
 
 const jwt = require("jsonwebtoken");
+const axios = require("axios");
 const bcrypt = require("bcryptjs");
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
@@ -32,7 +33,7 @@ exports.refresh_token = [
         const refreshToken = req.body.refreshToken;
         if (!refreshToken) {
             return res
-                .status(401)
+                .status(403)
                 .json({ message: "Refresh token is required" });
         }
 
@@ -101,6 +102,7 @@ exports.login_post = [
             return res.status(200).json({
                 access_token: access_token,
                 refresh_token: refresh_token,
+                user_id: user._id,
             });
         })(req, res, next);
     }),
