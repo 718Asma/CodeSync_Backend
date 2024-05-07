@@ -148,7 +148,7 @@ exports.google_post = [
 
 // validate fields, create user, hash password, save user, redirect to login
 exports.signup_post = [
-    body("full_name", "Full name should consist of a minimum of 3 characters.")
+    body("fullName", "Full name should consist of a minimum of 3 characters.")
         .trim()
         .isLength({ min: 3, max: 100 })
         .escape()
@@ -175,12 +175,12 @@ exports.signup_post = [
             "Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character"
         ),
 
-    body("confirm_password", "Password confirmation must not be empty.")
+    body("confirmPassword", "Password confirmation must not be empty.")
         .trim()
         .isLength({ min: 8, max: 100 })
         .escape(),
 
-    body("confirm_password").custom((value, { req }) => {
+    body("confirmPassword").custom((value, { req }) => {
         if (value !== req.body.password) {
             throw new Error("Password confirmation does not match password.");
         }
@@ -199,7 +199,8 @@ exports.signup_post = [
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
 
-        if (!errors.isEmpty()) res.status(400).json({ errors: errors.array() });
+        if (!errors.isEmpty())
+            return res.status(400).json({ errors: errors.array() });
 
         let user = new User({
             fullName: req.body.fullName,
@@ -230,6 +231,7 @@ exports.signup_post = [
         res.status(200).json({
             access_token: access_token,
             refresh_token: refresh_token,
+            user_id: user._id,
         });
     }),
 ];
