@@ -240,3 +240,38 @@ exports.update_profile_post = [
         }
     }),
 ];
+
+exports.search_users_get = [
+    passport.authenticate("jwt", { session: false }),
+    asyncHandler(async (req, res) => {
+        const query = req.query.name;
+        if (!query) {
+            return res.status(400).json({ message: "Query is required" });
+        }
+        try {
+            // only get their names, ids and profile images
+            const users = await User.find(
+                { fullName: { $regex: query, $options: "i" } },
+                "_id fullName profileImage"
+            );
+            return res.status(200).json({
+                status: "success",
+                data: users,
+            });
+        } catch (error) {
+            return res.status(500).json({ message: "Internal server error" });
+        }
+    }),
+];
+
+/* 
+//TODO: implement the following route ( discuss with the team first )
+for the idea of integrating google acc + local acc:
+posts, replies, discussions, reacts(dislikes, likes, upvotes and downvote) ownership will be transferred to the new account
+messages: either they get merged ( might cause issues with the order of messages) or they are lost in the process
+friends: the new account will have the friends of the old account 
+profile info: the new account will have the profile info of the old account
+profile image: the new account will have the profile image of the old account
+profile cover: the new account will have the profile cover of the old account
+naturally, all of the old account data will be deleted
+*/

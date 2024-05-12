@@ -6,7 +6,10 @@ let userController = require("../controllers/userController");
 router.get("/profile/:userId", userController.profile_get);
 
 // does the same as the route above
-router.get("/my-info/:userId", userController.get_all_my_info);
+// router.get("/my-info/:userId", userController.get_all_my_info);
+
+// route to search users by name
+router.get("/search-users", userController.search_users_get);
 
 router.post("/upload-profile-image", userController.uploadUserProfileImage);
 
