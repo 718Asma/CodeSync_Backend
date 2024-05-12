@@ -172,6 +172,7 @@ exports.get_user_contacts = [
                 $project: {
                     "userObjects._id": 1,
                     "userObjects.fullName": 1,
+                    "userObjects.profileImage": 1, // Include profileImage field
                 },
             },
         ]);
@@ -179,6 +180,7 @@ exports.get_user_contacts = [
         // Extract the unique contacts array from the aggregation result
         const uniqueContacts =
             contacts.length > 0 ? contacts[0].userObjects : [];
+        //DONE: populate uniqueContacts with the user's full name, profile image
 
         res.status(200).json({ contacts: uniqueContacts });
     }),

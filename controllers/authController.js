@@ -117,18 +117,28 @@ exports.google_post = [
         .escape(),
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
+        console.log(errors);
         if (!errors.isEmpty()) res.status(400).json({ errors: errors.array() });
 
         const { googleId, fullName } = req.body;
+        console.log(googleId, fullName);
         let user = await User.findOne({ googleId: googleId }).exec();
         if (!user) {
-            let newUser = new User({
-                googleId: googleId,
-                fullName: fullName,
-            });
-            await newUser.save();
-            user = newUser;
+            console.log("User not found, creating a new user.");
+            try {
+                let newUser = new User({
+                    googleId: googleId,
+                    fullName: fullName,
+                    username: googleId,
+                });
+                await newUser.save();
+                user = newUser;
+            } catch (err) {
+                console.log(err);
+                return res.status(500).json({ message: "Server error." });
+            }
         }
+        console.log("User found or created, logging in.");
         let opts = {
             issuer: "localhost:3000",
             audience: "localhost:5173",
@@ -142,6 +152,7 @@ exports.google_post = [
         return res.status(200).json({
             access_token: access_token,
             refresh_token: refresh_token,
+            user_id: user._id,
         });
     }),
 ];

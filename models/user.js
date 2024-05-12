@@ -8,6 +8,14 @@ const userSchema = new Schema({
     password: { type: String, maxLength: 100, minLength: 8 },
     googleId: { type: String, unique: true },
     friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    bio: { type: String, maxLength: 500 },
+    occupation: { type: String, maxLength: 100 },
+    profileImage: { type: String },
+    coverImage: { type: String },
+    gender: { type: String, enum: ["Male", "Female", "Other"] },
+    dateOfBirth: { type: Date },
+    address: { type: String, maxLength: 200 },
+    email: { type: String, maxLength: 100 },
 });
 
 // Virtual for user's URL
