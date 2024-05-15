@@ -2,11 +2,7 @@ let express = require("express");
 let router = express.Router();
 let userController = require("../controllers/userController");
 
-/* GET users listing. */
 router.get("/profile/:userId", userController.profile_get);
-
-// does the same as the route above
-// router.get("/my-info/:userId", userController.get_all_my_info);
 
 // route to search users by name
 router.get("/search-users", userController.search_users_get);

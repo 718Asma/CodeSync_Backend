@@ -3,29 +3,31 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const replySchema = new Schema({
-  owner: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  post: {
-    type: Schema.Types.ObjectId,
-    ref: "Post",
-    required: true,
-  },
-  content: {type: String, required: true},
-  upvotes: {
-    type: Number,
-    default: 0,
-  },
-  downvotes: {
-    type: Number,
-    default: 0,
-  },
-  timestamp: {
-    type: Date,
-    default: Date.now,
-  },
+    owner: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
+    post: {
+        type: Schema.Types.ObjectId,
+        ref: "Post",
+        required: true,
+    },
+    content: { type: String, required: true },
+    upvotes: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
+    downvotes: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now,
+    },
 });
 
 const Reply = mongoose.model("reply", replySchema);
