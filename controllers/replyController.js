@@ -10,7 +10,7 @@ require("../strategies/jwt");
 exports.create_reply = [
   // Authenticate user and validate input data
   passport.authenticate("jwt", { session: false }),
-  body("post").notEmpty().withMessage("Post ID is required"),
+  param("postId").notEmpty().withMessage("Post ID is required"),
   body("content")
     .notEmpty()
     .isLength({ min: 5, max: 500 })
@@ -22,13 +22,14 @@ exports.create_reply = [
     }
 
     try {
-      const { post, content } = req.body;
+      const postId = req.params.postId; // Extract post ID from route parameter
+      const { content } = req.body;
       const owner = req.user._id; // Extract owner ID from JWT payload
 
       // Create a new reply
       const reply = new Reply({
         owner,
-        post,
+        post: postId, // Assign post ID to the reply
         content,
       });
 
@@ -42,6 +43,7 @@ exports.create_reply = [
     }
   }),
 ];
+
 
 // Controller to get replies by user
 exports.get_replies_by_user = [
