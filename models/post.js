@@ -9,6 +9,7 @@ const postSchema = new Schema({
     ref: "Discussion",
     required: true,
   },
+  content: {type:String, required:true},
   likes: { type: Number, default: 0 },
   dislikes: { type: Number, default: 0 },
   images: [{ type: String }],

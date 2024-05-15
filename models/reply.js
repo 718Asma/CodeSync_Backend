@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
 
-const reactionSchema = new Schema({
+const replySchema = new Schema({
   owner: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -13,6 +13,7 @@ const reactionSchema = new Schema({
     ref: "Post",
     required: true,
   },
+  content: {type: String, required: true},
   upvotes: {
     type: Number,
     default: 0,
@@ -27,6 +28,6 @@ const reactionSchema = new Schema({
   },
 });
 
-const Reaction = mongoose.model("reaction", reactionSchema);
+const Reply = mongoose.model("reply", replySchema);
 
-module.exports = Reaction;
+module.exports = Reply;
