@@ -83,7 +83,7 @@ exports.get_discussions_by_name = [
     passport.authenticate("jwt", { session: false }),
     query("name")
         .trim()
-        .isLength({ min: 5, max: 50 })
+        .isLength({ min: 3, max: 50 })
         .withMessage("Name must be between 5 and 50 characters long"),
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
