@@ -13,7 +13,7 @@ exports.create_post = [
   // Authenticate user and validate input data
   passport.authenticate("jwt", { session: false }),
   uploadPostImages, // Handle multiple image uploads, up to 5 images
-  body("discussion").notEmpty().withMessage("Discussion ID is required"),
+  body("discussionId").notEmpty().withMessage("Discussion ID is required"),
   body("content")
     .notEmpty()
     .isLength({ min: 5, max: 500 })
@@ -25,7 +25,7 @@ exports.create_post = [
     }
 
     try {
-      const { discussion, content } = req.body;
+      const { discussionId, content } = req.body;
       const owner = req.user._id; // Extract owner ID from JWT payload
 
       let images = [];
@@ -37,7 +37,7 @@ exports.create_post = [
       // Create a new post
       const post = new Post({
         owner,
-        discussion,
+        discussionId,
         content,
         images,
       });
@@ -82,7 +82,7 @@ exports.get_post_by_discussion = [
       const discussionId = req.params.discussionId; // Retrieve discussion ID from URL params
 
       // Find posts belonging to the specified discussion
-      const posts = await Post.find({ discussion: discussionId });
+      const posts = await Post.find({ discussionId: discussionId });
 
       if (posts.length === 0) {
         return res
