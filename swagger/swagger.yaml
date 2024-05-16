@@ -1,0 +1,327 @@
+openapi: 3.0.0
+info:
+  title: Discussion API
+  version: 1.0.0
+  description: API for managing discussions, posts, and replies
+
+servers:
+  - url: http://localhost:3000
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+paths:
+  /discussion/create:
+    post:
+      summary: Create a new discussion
+      tags:
+        - Discussions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                banner:
+                  type: string
+      responses:
+        "201":
+          description: Discussion created successfully
+
+  /discussion/user:
+    get:
+      summary: Get discussions by user
+      tags:
+        - Discussions
+      responses:
+        "200":
+          description: A list of discussions
+
+  /discussion/by-name:
+    get:
+      summary: Get discussions by name
+      tags:
+        - Discussions
+      parameters:
+        - in: query
+          name: name
+          schema:
+            type: string
+          required: true
+          description: Name of the discussion
+      responses:
+        "200":
+          description: A list of discussions
+
+  /post/create:
+    post:
+      summary: Create a new post
+      tags:
+        - Posts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                discussionId:
+                  type: string
+                content:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "201":
+          description: Post created successfully
+
+  /post/user:
+    get:
+      summary: Get posts by user
+      tags:
+        - Posts
+      responses:
+        "200":
+          description: A list of posts
+
+  /post/by-discussion/{discussionId}:
+    get:
+      summary: Get posts by discussion
+      tags:
+        - Posts
+      parameters:
+        - in: path
+          name: discussionId
+          schema:
+            type: string
+          required: true
+          description: ID of the discussion
+      responses:
+        "200":
+          description: A list of posts
+
+  /post/like/{postId}:
+    put:
+      summary: Like a post
+      tags:
+        - Posts
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of the post
+      responses:
+        "200":
+          description: Post liked successfully
+
+  /post/unlike/{postId}:
+    put:
+      summary: Unlike a post
+      tags:
+        - Posts
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of the post
+      responses:
+        "200":
+          description: Post unliked successfully
+
+  /post/dislike/{postId}:
+    put:
+      summary: Dislike a post
+      tags:
+        - Posts
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of the post
+      responses:
+        "200":
+          description: Post disliked successfully
+
+  /post/undislike/{postId}:
+    put:
+      summary: Undislike a post
+      tags:
+        - Posts
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of the post
+      responses:
+        "200":
+          description: Post undisliked successfully
+
+  /post/{postId}:
+    delete:
+      summary: Delete a post
+      tags:
+        - Posts
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of the post
+      responses:
+        "200":
+          description: Post deleted successfully
+
+  /reply/create/{postId}:
+    post:
+      summary: Create a new reply
+      tags:
+        - Replies
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of the post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+      responses:
+        "201":
+          description: Reply created successfully
+
+  /reply/user:
+    get:
+      summary: Get replies by user
+      tags:
+        - Replies
+      responses:
+        "200":
+          description: A list of replies
+
+  /reply/by-post/{postId}:
+    get:
+      summary: Get replies by post
+      tags:
+        - Replies
+      parameters:
+        - in: path
+          name: postId
+          schema:
+            type: string
+          required: true
+          description: ID of the post
+      responses:
+        "200":
+          description: A list of replies
+
+  /reply/like/{replyId}:
+    put:
+      summary: Like a reply
+      tags:
+        - Replies
+      parameters:
+        - in: path
+          name: replyId
+          schema:
+            type: string
+          required: true
+          description: ID of the reply
+      responses:
+        "200":
+          description: Reply liked successfully
+
+  /reply/unlike/{replyId}:
+    put:
+      summary: Unlike a reply
+      tags:
+        - Replies
+      parameters:
+        - in: path
+          name: replyId
+          schema:
+            type: string
+          required: true
+          description: ID of the reply
+      responses:
+        "200":
+          description: Reply unliked successfully
+
+  /reply/dislike/{replyId}:
+    put:
+      summary: Dislike a reply
+      tags:
+        - Replies
+      parameters:
+        - in: path
+          name: replyId
+          schema:
+            type: string
+          required: true
+          description: ID of the reply
+      responses:
+        "200":
+          description: Reply disliked successfully
+
+  /reply/undislike/{replyId}:
+    put:
+      summary: Undislike a reply
+      tags:
+        - Replies
+      parameters:
+        - in: path
+          name: replyId
+          schema:
+            type: string
+          required: true
+          description: ID of the reply
+      responses:
+        "200":
+          description: Reply undisliked successfully
+
+  /reply/{replyId}:
+    delete:
+      summary: Delete a reply
+      tags:
+        - Replies
+      parameters:
+        - in: path
+          name: replyId
+          schema:
+            type: string
+          required: true
+          description: ID of the reply
+      responses:
+        "200":
+          description: Reply deleted successfully

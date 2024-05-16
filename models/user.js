@@ -6,7 +6,7 @@ const userSchema = new Schema({
     fullName: { type: String, required: true, maxLength: 100, minLength: 3 },
     username: { type: String, maxLength: 100, unique: true, minLength: 3 },
     password: { type: String, maxLength: 100, minLength: 8 },
-    googleId: { type: String, unique: true },
+    googleId: { type: String, unique: true , sparse: true},
     friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
     bio: { type: String, maxLength: 500 },
     occupation: { type: String, maxLength: 100 },

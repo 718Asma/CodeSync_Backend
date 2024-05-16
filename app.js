@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 require("dotenv").config();
+const swaggerSetup = require("./swagger/swaggerConfig");  
 
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
@@ -16,12 +17,18 @@ const server = http.createServer();
 const passport = require("passport");
 app.use(passport.initialize());
 
+// Setup Swagger
+swaggerSetup(app);
+
+
 const userRouter = require("./routes/user");
 const authRouter = require("./routes/auth");
 const messageRouter = require("./routes/message");
 const discussionRouter = require("./routes/discussion");
 const postRouter = require("./routes/post");
 const replyRouter = require("./routes/reply");
+
+
 
 // db connection
 const mongoDb = process.env.MONGODB_URI;
@@ -33,6 +40,7 @@ db.on("error", console.error.bind(console, "mongo connection error"));
 app.use(
     cors({
         origin: process.env.FRONTEND_URL, // Allow requests from this origin
+        // origin: "*",
         optionsSuccessStatus: 200, // legacy browsers choke on 204
         allowedHeaders: ["Content-Type", "Authorization", "authorization"],
     })
@@ -85,6 +93,8 @@ app.use("/message", messageRouter);
 app.use("/discussion", discussionRouter);
 app.use("/post", postRouter);
 app.use("/reply", replyRouter);
+
+
 
 // error handler
 app.use(function (err, req, res, next) {
