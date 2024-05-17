@@ -1,327 +1,915 @@
 openapi: 3.0.0
 info:
-  title: Discussion API
-  version: 1.0.0
-  description: API for managing discussions, posts, and replies
+    title: Backend API
+    version: 1.0.0
+    description: API for managing discussions, posts, replies, auth and messages
 
 servers:
-  - url: http://localhost:3000
+    - url: http://localhost:3000
 
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
+    securitySchemes:
+        bearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+    schemas:
+        Message:
+            type: object
+            properties:
+                _id:
+                    type: string
+                    example: 60a5e41ef7b5d64fc805f8e9
+                sender:
+                    type: string
+                    description: ID of the sender user
+                    example: 60a5e3f4f7b5d64fc805f8e8
+                receiver:
+                    type: string
+                    description: ID of the receiver user
+                    example: 60a5e405f7b5d64fc805f8e9
+                content:
+                    type: string
+                    description: Message content
+                    example: Hello, how are you?
+                timestamp:
+                    type: string
+                    format: date-time
+                    description: Timestamp of when the message was sent
+                    example: "2023-05-18T10:00:00.000Z"
+                lastModified:
+                    type: string
+                    format: date-time
+                    description: Timestamp of when the message was last modified
+                    example: "2023-05-18T10:05:00.000Z"
+        UserProfileResponse:
+            type: object
+            properties:
+                status:
+                    type: string
+                    example: success
+                data:
+                    $ref: "#/components/schemas/User"
+        User:
+            type: object
+            properties:
+                _id:
+                    type: string
+                    example: 60a5e41ef7b5d64fc805f8e9
+                fullName:
+                    type: string
+                    description: User's full name
+                    example: John Doe
+                profileImage:
+                    type: string
+                    description: URL of the user's profile image
+                    example: /images/profiles/60a5e41ef7b5d64fc805f8e9.jpg
+                coverImage:
+                    type: string
+                    description: URL of the user's cover image
+                    example: /images/covers/60a5e41ef7b5d64fc805f8e9.jpg
+                bio:
+                    type: string
+                    description: User's bio
+                    example: Software Developer
+                occupation:
+                    type: string
+                    description: User's occupation
+                    example: Software Engineer
+                gender:
+                    type: string
+                    description: User's gender
+                    example: Male
+                dateOfBirth:
+                    type: string
+                    format: date
+                    description: User's date of birth
+                    example: 1990-01-01
+                address:
+                    type: string
+                    description: User's address
+                    example: 123 Main St, Anytown, USA
+                friends:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/UserContact"
+        UserContact:
+            type: object
+            properties:
+                _id:
+                    type: string
+                    example: 60a5e41ef7b5d64fc805f8e9
+                fullName:
+                    type: string
+                    description: Friend's full name
+                    example: Jane Smith
+                profileImage:
+                    type: string
+                    description: URL of the friend's profile image
+                    example: /images/profiles/60a5e41ef7b5d64fc805f8e8.jpg
+        UserSearchResponse:
+            type: object
+            properties:
+                status:
+                    type: string
+                    example: success
+                data:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/UserContact"
+        UpdateProfileRequest:
+            type: object
+            properties:
+                fullName:
+                    type: string
+                bio:
+                    type: string
+                occupation:
+                    type: string
+                gender:
+                    type: string
+                dateOfBirth:
+                    type: string
+                    format: date
+                address:
+                    type: string
+                email:
+                    type: string
 security:
-  - bearerAuth: []
+    - bearerAuth: []
 
 paths:
-  /discussion/create:
-    post:
-      summary: Create a new discussion
-      tags:
-        - Discussions
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                title:
-                  type: string
-                description:
-                  type: string
-                banner:
-                  type: string
-      responses:
-        "201":
-          description: Discussion created successfully
-
-  /discussion/user:
-    get:
-      summary: Get discussions by user
-      tags:
-        - Discussions
-      responses:
-        "200":
-          description: A list of discussions
-
-  /discussion/by-name:
-    get:
-      summary: Get discussions by name
-      tags:
-        - Discussions
-      parameters:
-        - in: query
-          name: name
-          schema:
-            type: string
-          required: true
-          description: Name of the discussion
-      responses:
-        "200":
-          description: A list of discussions
-
-  /post/create:
-    post:
-      summary: Create a new post
-      tags:
-        - Posts
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                discussionId:
-                  type: string
+    /discussion/create:
+        post:
+            summary: Create a new discussion
+            tags:
+                - Discussions
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
                 content:
-                  type: string
-                images:
-                  type: array
-                  items:
-                    type: string
-      responses:
-        "201":
-          description: Post created successfully
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                title:
+                                    type: string
+                                description:
+                                    type: string
+                                banner:
+                                    type: string
+            responses:
+                "201":
+                    description: Discussion created successfully
 
-  /post/user:
-    get:
-      summary: Get posts by user
-      tags:
-        - Posts
-      responses:
-        "200":
-          description: A list of posts
+    /discussion/user:
+        get:
+            summary: Get discussions by user
+            tags:
+                - Discussions
+            responses:
+                "200":
+                    description: A list of discussions
 
-  /post/by-discussion/{discussionId}:
-    get:
-      summary: Get posts by discussion
-      tags:
-        - Posts
-      parameters:
-        - in: path
-          name: discussionId
-          schema:
-            type: string
-          required: true
-          description: ID of the discussion
-      responses:
-        "200":
-          description: A list of posts
+    /discussion/by-name:
+        get:
+            summary: Get discussions by name
+            tags:
+                - Discussions
+            parameters:
+                - in: query
+                  name: name
+                  schema:
+                      type: string
+                  required: true
+                  description: Name of the discussion
+            responses:
+                "200":
+                    description: A list of discussions
 
-  /post/like/{postId}:
-    put:
-      summary: Like a post
-      tags:
-        - Posts
-      parameters:
-        - in: path
-          name: postId
-          schema:
-            type: string
-          required: true
-          description: ID of the post
-      responses:
-        "200":
-          description: Post liked successfully
-
-  /post/unlike/{postId}:
-    put:
-      summary: Unlike a post
-      tags:
-        - Posts
-      parameters:
-        - in: path
-          name: postId
-          schema:
-            type: string
-          required: true
-          description: ID of the post
-      responses:
-        "200":
-          description: Post unliked successfully
-
-  /post/dislike/{postId}:
-    put:
-      summary: Dislike a post
-      tags:
-        - Posts
-      parameters:
-        - in: path
-          name: postId
-          schema:
-            type: string
-          required: true
-          description: ID of the post
-      responses:
-        "200":
-          description: Post disliked successfully
-
-  /post/undislike/{postId}:
-    put:
-      summary: Undislike a post
-      tags:
-        - Posts
-      parameters:
-        - in: path
-          name: postId
-          schema:
-            type: string
-          required: true
-          description: ID of the post
-      responses:
-        "200":
-          description: Post undisliked successfully
-
-  /post/{postId}:
-    delete:
-      summary: Delete a post
-      tags:
-        - Posts
-      parameters:
-        - in: path
-          name: postId
-          schema:
-            type: string
-          required: true
-          description: ID of the post
-      responses:
-        "200":
-          description: Post deleted successfully
-
-  /reply/create/{postId}:
-    post:
-      summary: Create a new reply
-      tags:
-        - Replies
-      parameters:
-        - in: path
-          name: postId
-          schema:
-            type: string
-          required: true
-          description: ID of the post
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
+    /post/create:
+        post:
+            summary: Create a new post
+            tags:
+                - Posts
+            requestBody:
+                required: true
                 content:
-                  type: string
-      responses:
-        "201":
-          description: Reply created successfully
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                discussionId:
+                                    type: string
+                                content:
+                                    type: string
+                                images:
+                                    type: array
+                                    items:
+                                        type: string
+            responses:
+                "201":
+                    description: Post created successfully
 
-  /reply/user:
-    get:
-      summary: Get replies by user
-      tags:
-        - Replies
-      responses:
-        "200":
-          description: A list of replies
+    /post/user:
+        get:
+            summary: Get posts by user
+            tags:
+                - Posts
+            responses:
+                "200":
+                    description: A list of posts
 
-  /reply/by-post/{postId}:
-    get:
-      summary: Get replies by post
-      tags:
-        - Replies
-      parameters:
-        - in: path
-          name: postId
-          schema:
-            type: string
-          required: true
-          description: ID of the post
-      responses:
-        "200":
-          description: A list of replies
+    /post/by-discussion/{discussionId}:
+        get:
+            summary: Get posts by discussion
+            tags:
+                - Posts
+            parameters:
+                - in: path
+                  name: discussionId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the discussion
+            responses:
+                "200":
+                    description: A list of posts
 
-  /reply/like/{replyId}:
-    put:
-      summary: Like a reply
-      tags:
-        - Replies
-      parameters:
-        - in: path
-          name: replyId
-          schema:
-            type: string
-          required: true
-          description: ID of the reply
-      responses:
-        "200":
-          description: Reply liked successfully
+    /post/like/{postId}:
+        put:
+            summary: Like a post
+            tags:
+                - Posts
+            parameters:
+                - in: path
+                  name: postId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the post
+            responses:
+                "200":
+                    description: Post liked successfully
 
-  /reply/unlike/{replyId}:
-    put:
-      summary: Unlike a reply
-      tags:
-        - Replies
-      parameters:
-        - in: path
-          name: replyId
-          schema:
-            type: string
-          required: true
-          description: ID of the reply
-      responses:
-        "200":
-          description: Reply unliked successfully
+    /post/unlike/{postId}:
+        put:
+            summary: Unlike a post
+            tags:
+                - Posts
+            parameters:
+                - in: path
+                  name: postId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the post
+            responses:
+                "200":
+                    description: Post unliked successfully
 
-  /reply/dislike/{replyId}:
-    put:
-      summary: Dislike a reply
-      tags:
-        - Replies
-      parameters:
-        - in: path
-          name: replyId
-          schema:
-            type: string
-          required: true
-          description: ID of the reply
-      responses:
-        "200":
-          description: Reply disliked successfully
+    /post/dislike/{postId}:
+        put:
+            summary: Dislike a post
+            tags:
+                - Posts
+            parameters:
+                - in: path
+                  name: postId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the post
+            responses:
+                "200":
+                    description: Post disliked successfully
 
-  /reply/undislike/{replyId}:
-    put:
-      summary: Undislike a reply
-      tags:
-        - Replies
-      parameters:
-        - in: path
-          name: replyId
-          schema:
-            type: string
-          required: true
-          description: ID of the reply
-      responses:
-        "200":
-          description: Reply undisliked successfully
+    /post/undislike/{postId}:
+        put:
+            summary: Undislike a post
+            tags:
+                - Posts
+            parameters:
+                - in: path
+                  name: postId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the post
+            responses:
+                "200":
+                    description: Post undisliked successfully
 
-  /reply/{replyId}:
-    delete:
-      summary: Delete a reply
-      tags:
-        - Replies
-      parameters:
-        - in: path
-          name: replyId
-          schema:
-            type: string
-          required: true
-          description: ID of the reply
-      responses:
-        "200":
-          description: Reply deleted successfully
+    /post/{postId}:
+        delete:
+            summary: Delete a post
+            tags:
+                - Posts
+            parameters:
+                - in: path
+                  name: postId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the post
+            responses:
+                "200":
+                    description: Post deleted successfully
+
+    /reply/create/{postId}:
+        post:
+            summary: Create a new reply
+            tags:
+                - Replies
+            parameters:
+                - in: path
+                  name: postId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the post
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                content:
+                                    type: string
+            responses:
+                "201":
+                    description: Reply created successfully
+
+    /reply/user:
+        get:
+            summary: Get replies by user
+            tags:
+                - Replies
+            responses:
+                "200":
+                    description: A list of replies
+
+    /reply/by-post/{postId}:
+        get:
+            summary: Get replies by post
+            tags:
+                - Replies
+            parameters:
+                - in: path
+                  name: postId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the post
+            responses:
+                "200":
+                    description: A list of replies
+
+    /reply/like/{replyId}:
+        put:
+            summary: Like a reply
+            tags:
+                - Replies
+            parameters:
+                - in: path
+                  name: replyId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the reply
+            responses:
+                "200":
+                    description: Reply liked successfully
+
+    /reply/unlike/{replyId}:
+        put:
+            summary: Unlike a reply
+            tags:
+                - Replies
+            parameters:
+                - in: path
+                  name: replyId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the reply
+            responses:
+                "200":
+                    description: Reply unliked successfully
+
+    /reply/dislike/{replyId}:
+        put:
+            summary: Dislike a reply
+            tags:
+                - Replies
+            parameters:
+                - in: path
+                  name: replyId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the reply
+            responses:
+                "200":
+                    description: Reply disliked successfully
+
+    /reply/undislike/{replyId}:
+        put:
+            summary: Undislike a reply
+            tags:
+                - Replies
+            parameters:
+                - in: path
+                  name: replyId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the reply
+            responses:
+                "200":
+                    description: Reply undisliked successfully
+
+    /reply/{replyId}:
+        delete:
+            summary: Delete a reply
+            tags:
+                - Replies
+            parameters:
+                - in: path
+                  name: replyId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the reply
+            responses:
+                "200":
+                    description: Reply deleted successfully
+
+    /auth/verify-token:
+        get:
+            summary: Verify JWT token
+            tags:
+                - Authentication
+            security:
+                - bearerAuth: []
+            responses:
+                "200":
+                    description: Token is valid
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: string
+                                        example: "token is valid"
+                "401":
+                    description: Unauthorized
+
+    /auth/login:
+        post:
+            summary: Log in a user
+            tags:
+                - Authentication
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                username:
+                                    type: string
+                                password:
+                                    type: string
+            responses:
+                "200":
+                    description: User logged in successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    access_token:
+                                        type: string
+                                    refresh_token:
+                                        type: string
+                                    user_id:
+                                        type: string
+                "400":
+                    description: Invalid username or password
+
+    /auth/signup:
+        post:
+            summary: Sign up a new user
+            tags:
+                - Authentication
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                fullName:
+                                    type: string
+                                username:
+                                    type: string
+                                password:
+                                    type: string
+                                confirmPassword:
+                                    type: string
+            responses:
+                "200":
+                    description: User signed up successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    access_token:
+                                        type: string
+                                    refresh_token:
+                                        type: string
+                                    user_id:
+                                        type: string
+                "400":
+                    description: Validation errors
+
+    /auth/refresh-token:
+        post:
+            summary: Refresh JWT token
+            tags:
+                - Authentication
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                refreshToken:
+                                    type: string
+            responses:
+                "200":
+                    description: Token refreshed successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    access_token:
+                                        type: string
+                "400":
+                    description: Invalid refresh token
+                "403":
+                    description: Refresh token is required
+
+    /auth/google:
+        post:
+            summary: Log in or sign up with Google
+            tags:
+                - Authentication
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                googleId:
+                                    type: string
+                                fullName:
+                                    type: string
+            responses:
+                "200":
+                    description: User logged in or signed up with Google successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    access_token:
+                                        type: string
+                                    refresh_token:
+                                        type: string
+                                    user_id:
+                                        type: string
+                "400":
+                    description: Validation errors
+                "500":
+                    description: Server error
+    /message/send:
+        post:
+            summary: Send a message
+            tags:
+                - Messages
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                receiver:
+                                    type: string
+                                content:
+                                    type: string
+            responses:
+                "200":
+                    description: Message sent successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                        example: "Message sent"
+                "400":
+                    description: Validation errors
+
+    /message/get/{receiverId}:
+        get:
+            summary: Get messages between two users
+            tags:
+                - Messages
+            security:
+                - bearerAuth: []
+            parameters:
+                - in: path
+                  name: receiverId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the receiver user
+            responses:
+                "200":
+                    description: List of messages between the users
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/Message"
+                "400":
+                    description: Validation errors
+
+    /message/delete/{messageId}:
+        delete:
+            summary: Delete a message
+            tags:
+                - Messages
+            security:
+                - bearerAuth: []
+            parameters:
+                - in: path
+                  name: messageId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the message to delete
+            responses:
+                "200":
+                    description: Message deleted successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                        example: "Message deleted"
+                "400":
+                    description: Validation errors
+                "404":
+                    description: Message not found
+
+    /message/update/{messageId}:
+        put:
+            summary: Update a message
+            tags:
+                - Messages
+            security:
+                - bearerAuth: []
+            parameters:
+                - in: path
+                  name: messageId
+                  schema:
+                      type: string
+                  required: true
+                  description: ID of the message to update
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                content:
+                                    type: string
+            responses:
+                "200":
+                    description: Message updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                        example: "Message updated"
+                "400":
+                    description: Validation errors
+                "404":
+                    description: Message not found
+
+    /message/contacts:
+        get:
+            summary: Get user contacts
+            tags:
+                - Messages
+            security:
+                - bearerAuth: []
+            responses:
+                "200":
+                    description: List of user contacts
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    contacts:
+                                        type: array
+                                        items:
+                                            $ref: "#/components/schemas/UserContact"
+                "401":
+                    description: Unauthorized
+    /user/profile/{userId}:
+        get:
+            tags:
+                - User
+            summary: Get user profile by user ID
+            security:
+                - bearerAuth: []
+            parameters:
+                - in: path
+                  name: userId
+                  schema:
+                      type: string
+                  required: true
+                  description: The ID of the user
+            responses:
+                "200":
+                    description: Successful response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserProfileResponse"
+                "400":
+                    description: Bad request
+                "404":
+                    description: User not found
+                "500":
+                    description: Internal server error
+    /user/search-users:
+        get:
+            tags:
+                - User
+            summary: Search users by name
+            security:
+                - bearerAuth: []
+            parameters:
+                - in: query
+                  name: name
+                  schema:
+                      type: string
+                  required: true
+                  description: The name to search for
+            responses:
+                "200":
+                    description: Successful response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserSearchResponse"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+    /user/upload-profile-image:
+        post:
+            tags:
+                - User
+            summary: Upload user profile image
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    multipart/form-data:
+                        schema:
+                            type: object
+                            properties:
+                                profileImage:
+                                    type: string
+                                    format: binary
+            responses:
+                "200":
+                    description: Profile image uploaded successfully
+                "400":
+                    description: Error uploading profile image
+                "500":
+                    description: Internal server error
+    /user/upload-cover-image:
+        post:
+            tags:
+                - User
+            summary: Upload cover image
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    multipart/form-data:
+                        schema:
+                            type: object
+                            properties:
+                                coverImage:
+                                    type: string
+                                    format: binary
+            responses:
+                "200":
+                    description: Cover image uploaded successfully
+                "400":
+                    description: Error uploading cover image
+                "500":
+                    description: Internal server error
+    /user/update-profile-details:
+        post:
+            tags:
+                - User
+            summary: Update user profile details
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/UpdateProfileRequest"
+            responses:
+                "200":
+                    description: Profile updated successfully
+                "500":
+                    description: Internal server error
+    /user/add-friend/{userId}:
+        post:
+            tags:
+                - User
+            summary: Add a friend
+            security:
+                - bearerAuth: []
+            parameters:
+                - in: path
+                  name: userId
+                  schema:
+                      type: string
+                  required: true
+                  description: The ID of the friend to add
+            responses:
+                "200":
+                    description: Friend added successfully
+                "400":
+                    description: Bad request
+                "404":
+                    description: User not found
+                "500":
+                    description: Internal server error
+    /user/remove-friend/{userId}:
+        post:
+            tags:
+                - User
+            summary: Remove a friend
+            security:
+                - bearerAuth: []
+            parameters:
+                - in: path
+                  name: userId
+                  schema:
+                      type: string
+                  required: true
+                  description: The ID of the friend to remove
+            responses:
+                "200":
+                    description: Friend removed successfully
+                "400":
+                    description: Bad request
+                "404":
+                    description: User not found
+                "500":
+                    description: Internal server error
