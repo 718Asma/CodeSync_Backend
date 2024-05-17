@@ -23,7 +23,14 @@ const setupSwagger = (app) => {
     },
   ];
 
+
+  // Serve Swagger UI
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+  // Serve Swagger JSON
+  app.get("/api-docs.json", (req, res) => {
+    res.json(swaggerDocument);
+  });
 };
 
 module.exports = setupSwagger;
