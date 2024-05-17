@@ -28,16 +28,17 @@ describe("POST /auth/signup", () => {
 
     it("should return 400 if bcrypt.hash encounters an error", async () => {
         // Mock body function and its chaining methods
-    body.mockReturnValueOnce((field, message) => ({
-        trim: jest.fn().mockReturnValue itself, // Allow chaining
-        isLength: jest.fn(),
-        escape: jest.fn(),
-      }));
-  
-      validationResult.mockReturnValue({
-        isEmpty: () => false,
-        array: () => [{ msg: "Validation error" }],
-      });
+        body.mockReturnValueOnce((field, message) => ({
+            trim: jest.fn().mockReturnValue,
+            itself, // Allow chaining
+            isLength: jest.fn(),
+            escape: jest.fn(),
+        }));
+
+        validationResult.mockReturnValue({
+            isEmpty: () => false,
+            array: () => [{ msg: "Validation error" }],
+        });
 
         bcrypt.hash.mockImplementation((password, salt, callback) => {
             callback(new Error("Hashing error"));
