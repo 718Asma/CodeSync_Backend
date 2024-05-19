@@ -1,1137 +1,1432 @@
 openapi: 3.0.0
 info:
-    title: Backend API
-    version: 1.0.0
-    description: API for managing discussions, posts, replies, auth and messages
+  title: Backend API
+  version: 1.0.0
+  description: API for managing discussions, posts, replies, auth and messages
 
 servers:
-    - url: http://localhost:3000
+  - url: http://localhost:3000
 
 components:
-    securitySchemes:
-        bearerAuth:
-            type: http
-            scheme: bearer
-            bearerFormat: JWT
-    schemas:
-        Message:
-            type: object
-            properties:
-                _id:
-                    type: string
-                    example: 60a5e41ef7b5d64fc805f8e9
-                sender:
-                    type: string
-                    description: ID of the sender user
-                    example: 60a5e3f4f7b5d64fc805f8e8
-                receiver:
-                    type: string
-                    description: ID of the receiver user
-                    example: 60a5e405f7b5d64fc805f8e9
-                content:
-                    type: string
-                    description: Message content
-                    example: Hello, how are you?
-                timestamp:
-                    type: string
-                    format: date-time
-                    description: Timestamp of when the message was sent
-                    example: "2023-05-18T10:00:00.000Z"
-                lastModified:
-                    type: string
-                    format: date-time
-                    description: Timestamp of when the message was last modified
-                    example: "2023-05-18T10:05:00.000Z"
-        UserProfileResponse:
-            type: object
-            properties:
-                status:
-                    type: string
-                    example: success
-                data:
-                    $ref: "#/components/schemas/User"
-        User:
-            type: object
-            properties:
-                _id:
-                    type: string
-                    example: 60a5e41ef7b5d64fc805f8e9
-                fullName:
-                    type: string
-                    description: User's full name
-                    example: John Doe
-                profileImage:
-                    type: string
-                    description: URL of the user's profile image
-                    example: /images/profiles/60a5e41ef7b5d64fc805f8e9.jpg
-                coverImage:
-                    type: string
-                    description: URL of the user's cover image
-                    example: /images/covers/60a5e41ef7b5d64fc805f8e9.jpg
-                bio:
-                    type: string
-                    description: User's bio
-                    example: Software Developer
-                occupation:
-                    type: string
-                    description: User's occupation
-                    example: Software Engineer
-                gender:
-                    type: string
-                    description: User's gender
-                    example: Male
-                dateOfBirth:
-                    type: string
-                    format: date
-                    description: User's date of birth
-                    example: 1990-01-01
-                address:
-                    type: string
-                    description: User's address
-                    example: 123 Main St, Anytown, USA
-                friends:
-                    type: array
-                    items:
-                        $ref: "#/components/schemas/UserContact"
-                savedPosts:
-                    type: array
-                    items:
-                        type: string
-                    description: IDs of the posts saved by the user
-                    example: ["60a5e41ef7b5d64fc805f8e9"]
-        UserContact:
-            type: object
-            properties:
-                _id:
-                    type: string
-                    example: 60a5e41ef7b5d64fc805f8e9
-                fullName:
-                    type: string
-                    description: Friend's full name
-                    example: Jane Smith
-                profileImage:
-                    type: string
-                    description: URL of the friend's profile image
-                    example: /images/profiles/60a5e41ef7b5d64fc805f8e8.jpg
-        UserSearchResponse:
-            type: object
-            properties:
-                status:
-                    type: string
-                    example: success
-                data:
-                    type: array
-                    items:
-                        $ref: "#/components/schemas/UserContact"
-        UpdateProfileRequest:
-            type: object
-            properties:
-                fullName:
-                    type: string
-                bio:
-                    type: string
-                occupation:
-                    type: string
-                gender:
-                    type: string
-                dateOfBirth:
-                    type: string
-                    format: date
-                address:
-                    type: string
-                email:
-                    type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Discussion:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the discussion
+        creator:
+          type: string
+          description: ID of the user who created the discussion
+        participants:
+          type: array
+          items:
+            type: string
+          description: Array of user IDs who are participating in the discussion
+        title:
+          type: string
+          description: Title of the discussion
+        description:
+          type: string
+          description: Description of the discussion
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp indicating when the discussion was created
+        banner:
+          type: string
+          description: URL of the banner image for the discussion
+    Reply:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the reply
+        owner:
+          type: string
+          description: ID of the user who created the reply
+        post:
+          type: string
+          description: ID of the post to which the reply belongs
+        content:
+          type: string
+          description: Content of the reply
+        upvotes:
+          type: array
+          items:
+            type: string
+          description: Array of user IDs who upvoted the reply
+        downvotes:
+          type: array
+          items:
+            type: string
+          description: Array of user IDs who downvoted the reply
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp indicating when the reply was created
+    Post:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the post
+        owner:
+          type: string
+          description: ID of the user who created the post
+        discussionId:
+          type: string
+          description: ID of the discussion the post belongs to
+        content:
+          type: string
+          description: Content of the post
+        images:
+          type: array
+          items:
+            type: string
+          description: Array of image URLs associated with the post
+        likes:
+          type: array
+          items:
+            type: string
+          description: Array of user IDs who liked the post
+        dislikes:
+          type: array
+          items:
+            type: string
+          description: Array of user IDs who disliked the post
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp indicating when the post was created
+    Message:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 60a5e41ef7b5d64fc805f8e9
+        sender:
+          type: string
+          description: ID of the sender user
+          example: 60a5e3f4f7b5d64fc805f8e8
+        receiver:
+          type: string
+          description: ID of the receiver user
+          example: 60a5e405f7b5d64fc805f8e9
+        content:
+          type: string
+          description: Message content
+          example: Hello, how are you?
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of when the message was sent
+          example: "2023-05-18T10:00:00.000Z"
+        lastModified:
+          type: string
+          format: date-time
+          description: Timestamp of when the message was last modified
+          example: "2023-05-18T10:05:00.000Z"
+    UserProfileResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          $ref: "#/components/schemas/User"
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 60a5e41ef7b5d64fc805f8e9
+        fullName:
+          type: string
+          description: User's full name
+          example: John Doe
+        profileImage:
+          type: string
+          description: URL of the user's profile image
+          example: /images/profiles/60a5e41ef7b5d64fc805f8e9.jpg
+        coverImage:
+          type: string
+          description: URL of the user's cover image
+          example: /images/covers/60a5e41ef7b5d64fc805f8e9.jpg
+        bio:
+          type: string
+          description: User's bio
+          example: Software Developer
+        occupation:
+          type: string
+          description: User's occupation
+          example: Software Engineer
+        gender:
+          type: string
+          description: User's gender
+          example: Male
+        dateOfBirth:
+          type: string
+          format: date
+          description: User's date of birth
+          example: 1990-01-01
+        address:
+          type: string
+          description: User's address
+          example: 123 Main St, Anytown, USA
+        friends:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserContact"
+        savedPosts:
+          type: array
+          items:
+            type: string
+          description: IDs of the posts saved by the user
+          example: ["60a5e41ef7b5d64fc805f8e9"]
+    UserContact:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 60a5e41ef7b5d64fc805f8e9
+        fullName:
+          type: string
+          description: Friend's full name
+          example: Jane Smith
+        profileImage:
+          type: string
+          description: URL of the friend's profile image
+          example: /images/profiles/60a5e41ef7b5d64fc805f8e8.jpg
+    UserSearchResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserContact"
+    UpdateProfileRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        bio:
+          type: string
+        occupation:
+          type: string
+        gender:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        address:
+          type: string
+        email:
+          type: string
 security:
-    - bearerAuth: []
+  - bearerAuth: []
 
 paths:
-    /discussion/create:
-        post:
-            summary: Create a new discussion
-            tags:
-                - Discussions
-            security:
-                - bearerAuth: []
-            requestBody:
-                required: true
+  /discussion/create:
+    post:
+      summary: Create a new discussion
+      tags:
+        - Discussion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Discussion"
+      responses:
+        "201":
+          description: Discussion created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Discussion"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+
+  /discussion/all:
+    get:
+      tags:
+        - Discussion
+      summary: Get all discussions
+      responses:
+        "200":
+          description: Discussions found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Discussion"
+        "500":
+          description: Internal server error
+
+  /discussion/user:
+    get:
+      tags:
+        - Discussion
+      summary: Get discussions by user
+      responses:
+        "200":
+          description: Discussions found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Discussion"
+        "500":
+          description: Internal server error
+
+  /discussion/by-name:
+    get:
+      tags:
+        - Discussion
+      summary: Get discussions by name
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Discussions found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Discussion"
+        "500":
+          description: Internal server error
+
+  /discussion/join_leave/{discussionId}:
+    put:
+      tags:
+        - Discussion
+      summary: Join or leave a discussion
+      parameters:
+        - in: path
+          name: discussionId
+          required: true
+          schema:
+            type: string
+            description: ID of the discussion
+      responses:
+        "200":
+          description: Participant status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Discussion"
+        "404":
+          description: Discussion not found
+        "500":
+          description: Internal server error
+  /post/create:
+    post:
+      tags:
+        - Post
+      summary: Create a new post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                discussionId:
+                  type: string
+                  description: ID of the discussion the post belongs to
                 content:
-                    application/json:
-                        schema:
-                            type: object
-                            properties:
-                                title:
-                                    type: string
-                                description:
-                                    type: string
-                                banner:
-                                    type: string
-            responses:
-                "201":
-                    description: Discussion created successfully
+                  type: string
+                  description: Content of the post
+      responses:
+        "201":
+          description: Post created successfully
+        "400":
+          description: Invalid request body
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal server error
 
-    /discussion/user:
-        get:
-            summary: Get discussions by user
-            tags:
-                - Discussions
-            responses:
-                "200":
-                    description: A list of discussions
+  /post/user:
+    get:
+      tags:
+        - Post
+      summary: Get posts by creator
+      responses:
+        "200":
+          description: Posts retrieved successfully
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal server error
 
-    /discussion/by-name:
-        get:
-            summary: Get discussions by name
-            tags:
-                - Discussions
-            parameters:
-                - in: query
-                  name: name
-                  schema:
-                      type: string
-                  required: true
-                  description: Name of the discussion
-            responses:
-                "200":
-                    description: A list of discussions
+  /post/by-discussion/{discussionId}:
+    get:
+      tags:
+        - Post
+      summary: Get posts by discussion
+      parameters:
+        - in: path
+          name: discussionId
+          required: true
+          schema:
+            type: string
+          description: ID of the discussion to retrieve posts for
+      responses:
+        "200":
+          description: Posts retrieved successfully
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal server error
 
-    /post/create:
-        post:
-            summary: Create a new post
-            tags:
-                - Posts
-            requestBody:
-                required: true
+  /post/likes/{postId}:
+    get:
+      tags:
+        - Post
+      summary: Get the number of likes for a post
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: string
+          description: ID of the post
+      responses:
+        "200":
+          description: Number of likes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  likes:
+                    type: integer
+        "404":
+          description: Post not found
+        "500":
+          description: Internal server error
+
+  /post/dislikes/{postId}:
+    get:
+      tags:
+        - Post
+      summary: Get the number of dislikes for a post
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: string
+          description: ID of the post
+      responses:
+        "200":
+          description: Number of dislikes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dislikes:
+                    type: integer
+        "404":
+          description: Post not found
+        "500":
+          description: Internal server error
+
+  /post/like/{postId}:
+    put:
+      tags:
+        - Post
+      summary: Like a post
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: string
+          description: ID of the post to like
+      responses:
+        "200":
+          description: Like status updated successfully
+        "400":
+          description: Invalid request
+        "401":
+          description: Unauthorized access
+        "404":
+          description: Post not found
+        "500":
+          description: Internal server error
+
+  /post/dislike/{postId}:
+    put:
+      tags:
+        - Post
+      summary: Dislike a post
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: string
+          description: ID of the post to dislike
+      responses:
+        "200":
+          description: Dislike status updated successfully
+        "400":
+          description: Invalid request
+        "401":
+          description: Unauthorized access
+        "404":
+          description: Post not found
+        "500":
+          description: Internal server error
+
+  /post/delete/{postId}:
+    delete:
+      tags:
+        - Post
+      summary: Delete a post
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: string
+          description: ID of the post to delete
+      responses:
+        "200":
+          description: Post and associated replies deleted successfully
+        "401":
+          description: Unauthorized access
+        "404":
+          description: Post not found
+        "500":
+          description: Internal server error
+
+  /reply/create/{postId}:
+    post:
+      tags:
+        - Reply
+      summary: Create a new reply
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: string
+          description: ID of the post to reply to
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
                 content:
-                    application/json:
-                        schema:
-                            type: object
-                            properties:
-                                discussionId:
-                                    type: string
-                                content:
-                                    type: string
-                                images:
-                                    type: array
-                                    items:
-                                        type: string
-            responses:
-                "201":
-                    description: Post created successfully
+                  type: string
+                  description: Content of the reply
+      responses:
+        "201":
+          description: Reply created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message
+                  reply:
+                    $ref: "#/components/schemas/Reply"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
 
-    /post/user:
-        get:
-            summary: Get posts by user
-            tags:
-                - Posts
-            responses:
-                "200":
-                    description: A list of posts
+  /reply/user:
+    get:
+      tags:
+        - Reply
+      summary: Get replies by user
+      responses:
+        "200":
+          description: Replies retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reply"
+        "500":
+          description: Internal server error
 
-    /post/by-discussion/{discussionId}:
-        get:
-            summary: Get posts by discussion
-            tags:
-                - Posts
-            parameters:
-                - in: path
-                  name: discussionId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the discussion
-            responses:
-                "200":
-                    description: A list of posts
+  /reply/by-post/{postId}:
+    get:
+      tags:
+        - Reply
+      summary: Get replies by post
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: string
+          description: ID of the post
+      responses:
+        "200":
+          description: Replies retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reply"
+        "404":
+          description: Post not found
+        "500":
+          description: Internal server error
 
-    /post/like/{postId}:
-        put:
-            summary: Like a post
-            tags:
-                - Posts
-            parameters:
-                - in: path
-                  name: postId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the post
-            responses:
-                "200":
-                    description: Post liked successfully
+  /reply/upvotes/{replyId}:
+    get:
+      tags:
+        - Reply
+      summary: Get the number of upvotes for a reply
+      parameters:
+        - in: path
+          name: replyId
+          required: true
+          schema:
+            type: string
+          description: ID of the reply
+      responses:
+        "200":
+          description: Number of upvotes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upvotes:
+                    type: integer
+        "404":
+          description: Reply not found
+        "500":
+          description: Internal server error
+  /reply/downvotes/{replyId}:
+    get:
+      tags:
+        - Reply
+      summary: Get the number of downvotes for a reply
+      parameters:
+        - in: path
+          name: replyId
+          required: true
+          schema:
+            type: string
+          description: ID of the reply
+      responses:
+        "200":
+          description: Number of downvotes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  downvotes:
+                    type: integer
+        "404":
+          description: Reply not found
+        "500":
+          description: Internal server error
 
-    /post/unlike/{postId}:
-        put:
-            summary: Unlike a post
-            tags:
-                - Posts
-            parameters:
-                - in: path
-                  name: postId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the post
-            responses:
-                "200":
-                    description: Post unliked successfully
+  /reply/upvote/{replyId}:
+    put:
+      tags:
+        - Reply
+      summary: Upvote a reply
+      parameters:
+        - in: path
+          name: replyId
+          required: true
+          schema:
+            type: string
+          description: ID of the reply
+      responses:
+        "200":
+          description: Reply upvoted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reply"
+        "404":
+          description: Reply not found
+        "500":
+          description: Internal server error
 
-    /post/dislike/{postId}:
-        put:
-            summary: Dislike a post
-            tags:
-                - Posts
-            parameters:
-                - in: path
-                  name: postId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the post
-            responses:
-                "200":
-                    description: Post disliked successfully
+  /reply/downvote/{replyId}:
+    put:
+      tags:
+        - Reply
+      summary: Downvote a reply
+      parameters:
+        - in: path
+          name: replyId
+          required: true
+          schema:
+            type: string
+          description: ID of the reply
+      responses:
+        "200":
+          description: Reply downvoted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reply"
+        "404":
+          description: Reply not found
+        "500":
+          description: Internal server error
 
-    /post/undislike/{postId}:
-        put:
-            summary: Undislike a post
-            tags:
-                - Posts
-            parameters:
-                - in: path
-                  name: postId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the post
-            responses:
-                "200":
-                    description: Post undisliked successfully
+  /reply/delete/{replyId}:
+    delete:
+      tags:
+        - Reply
+      summary: Delete a reply
+      parameters:
+        - in: path
+          name: replyId
+          required: true
+          schema:
+            type: string
+          description: ID of the reply to delete
+      responses:
+        "200":
+          description: Reply deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message
+                  reply:
+                    $ref: "#/components/schemas/Reply"
+        "404":
+          description: Reply not found
+        "500":
+          description: Internal server error
 
-    /post/{postId}:
-        delete:
-            summary: Delete a post
-            tags:
-                - Posts
-            parameters:
-                - in: path
-                  name: postId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the post
-            responses:
-                "200":
-                    description: Post deleted successfully
+  /auth/verify-token:
+    get:
+      summary: Verify JWT token
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                    example: "token is valid"
+        "401":
+          description: Unauthorized
 
-    /reply/create/{postId}:
-        post:
-            summary: Create a new reply
-            tags:
-                - Replies
-            parameters:
-                - in: path
-                  name: postId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the post
-            requestBody:
-                required: true
+  /auth/login:
+    post:
+      summary: Log in a user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  user_id:
+                    type: string
+        "400":
+          description: Invalid username or password
+
+  /auth/signup:
+    post:
+      summary: Sign up a new user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+                confirmPassword:
+                  type: string
+      responses:
+        "200":
+          description: User signed up successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  user_id:
+                    type: string
+        "400":
+          description: Validation errors
+
+  /auth/refresh-token:
+    post:
+      summary: Refresh JWT token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        "200":
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+        "400":
+          description: Invalid refresh token
+        "403":
+          description: Refresh token is required
+
+  /auth/google:
+    post:
+      summary: Log in or sign up with Google
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                googleId:
+                  type: string
+                fullName:
+                  type: string
+      responses:
+        "200":
+          description: User logged in or signed up with Google successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  user_id:
+                    type: string
+        "400":
+          description: Validation errors
+        "500":
+          description: Server error
+
+  /message/send:
+    post:
+      summary: Send a message
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                receiver:
+                  type: string
                 content:
-                    application/json:
-                        schema:
-                            type: object
-                            properties:
-                                content:
-                                    type: string
-            responses:
-                "201":
-                    description: Reply created successfully
+                  type: string
+      responses:
+        "200":
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Message sent"
+        "400":
+          description: Validation errors
 
-    /reply/user:
-        get:
-            summary: Get replies by user
-            tags:
-                - Replies
-            responses:
-                "200":
-                    description: A list of replies
+  /message/get/{receiverId}:
+    get:
+      summary: Get messages between two users
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: receiverId
+          schema:
+            type: string
+          required: true
+          description: ID of the receiver user
+      responses:
+        "200":
+          description: List of messages between the users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+        "400":
+          description: Validation errors
 
-    /reply/by-post/{postId}:
-        get:
-            summary: Get replies by post
-            tags:
-                - Replies
-            parameters:
-                - in: path
-                  name: postId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the post
-            responses:
-                "200":
-                    description: A list of replies
+  /message/delete/{messageId}:
+    delete:
+      summary: Delete a message
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: messageId
+          schema:
+            type: string
+          required: true
+          description: ID of the message to delete
+      responses:
+        "200":
+          description: Message deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Message deleted"
+        "400":
+          description: Validation errors
+        "404":
+          description: Message not found
 
-    /reply/like/{replyId}:
-        put:
-            summary: Like a reply
-            tags:
-                - Replies
-            parameters:
-                - in: path
-                  name: replyId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the reply
-            responses:
-                "200":
-                    description: Reply liked successfully
-
-    /reply/unlike/{replyId}:
-        put:
-            summary: Unlike a reply
-            tags:
-                - Replies
-            parameters:
-                - in: path
-                  name: replyId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the reply
-            responses:
-                "200":
-                    description: Reply unliked successfully
-
-    /reply/dislike/{replyId}:
-        put:
-            summary: Dislike a reply
-            tags:
-                - Replies
-            parameters:
-                - in: path
-                  name: replyId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the reply
-            responses:
-                "200":
-                    description: Reply disliked successfully
-
-    /reply/undislike/{replyId}:
-        put:
-            summary: Undislike a reply
-            tags:
-                - Replies
-            parameters:
-                - in: path
-                  name: replyId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the reply
-            responses:
-                "200":
-                    description: Reply undisliked successfully
-
-    /reply/{replyId}:
-        delete:
-            summary: Delete a reply
-            tags:
-                - Replies
-            parameters:
-                - in: path
-                  name: replyId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the reply
-            responses:
-                "200":
-                    description: Reply deleted successfully
-
-    /auth/verify-token:
-        get:
-            summary: Verify JWT token
-            tags:
-                - Authentication
-            security:
-                - bearerAuth: []
-            responses:
-                "200":
-                    description: Token is valid
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    success:
-                                        type: string
-                                        example: "token is valid"
-                "401":
-                    description: Unauthorized
-
-    /auth/login:
-        post:
-            summary: Log in a user
-            tags:
-                - Authentication
-            requestBody:
-                required: true
+  /message/update/{messageId}:
+    put:
+      summary: Update a message
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: messageId
+          schema:
+            type: string
+          required: true
+          description: ID of the message to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
                 content:
-                    application/json:
-                        schema:
-                            type: object
-                            properties:
-                                username:
-                                    type: string
-                                password:
-                                    type: string
-            responses:
-                "200":
-                    description: User logged in successfully
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    access_token:
-                                        type: string
-                                    refresh_token:
-                                        type: string
-                                    user_id:
-                                        type: string
-                "400":
-                    description: Invalid username or password
+                  type: string
+      responses:
+        "200":
+          description: Message updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Message updated"
+        "400":
+          description: Validation errors
+        "404":
+          description: Message not found
 
-    /auth/signup:
-        post:
-            summary: Sign up a new user
-            tags:
-                - Authentication
-            requestBody:
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            type: object
-                            properties:
-                                fullName:
-                                    type: string
-                                username:
-                                    type: string
-                                password:
-                                    type: string
-                                confirmPassword:
-                                    type: string
-            responses:
-                "200":
-                    description: User signed up successfully
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    access_token:
-                                        type: string
-                                    refresh_token:
-                                        type: string
-                                    user_id:
-                                        type: string
-                "400":
-                    description: Validation errors
+  /message/contacts:
+    get:
+      summary: Get user contacts
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of user contacts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contacts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserContact"
+        "401":
+          description: Unauthorized
 
-    /auth/refresh-token:
-        post:
-            summary: Refresh JWT token
-            tags:
-                - Authentication
-            requestBody:
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            type: object
-                            properties:
-                                refreshToken:
-                                    type: string
-            responses:
-                "200":
-                    description: Token refreshed successfully
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    access_token:
-                                        type: string
-                "400":
-                    description: Invalid refresh token
-                "403":
-                    description: Refresh token is required
+  /user/profile/{userId}:
+    get:
+      tags:
+        - User
+      summary: Get user profile by user ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: The ID of the user
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileResponse"
+        "400":
+          description: Bad request
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+  /user/search-users:
+    get:
+      tags:
+        - User
+      summary: Search users by name
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: name
+          schema:
+            type: string
+          required: true
+          description: The name to search for
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSearchResponse"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
 
-    /auth/google:
-        post:
-            summary: Log in or sign up with Google
-            tags:
-                - Authentication
-            requestBody:
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            type: object
-                            properties:
-                                googleId:
-                                    type: string
-                                fullName:
-                                    type: string
-            responses:
-                "200":
-                    description: User logged in or signed up with Google successfully
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    access_token:
-                                        type: string
-                                    refresh_token:
-                                        type: string
-                                    user_id:
-                                        type: string
-                "400":
-                    description: Validation errors
-                "500":
-                    description: Server error
-    /message/send:
-        post:
-            summary: Send a message
-            tags:
-                - Messages
-            security:
-                - bearerAuth: []
-            requestBody:
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            type: object
-                            properties:
-                                receiver:
-                                    type: string
-                                content:
-                                    type: string
-            responses:
-                "200":
-                    description: Message sent successfully
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-                                        example: "Message sent"
-                "400":
-                    description: Validation errors
+  /user/upload-profile-image:
+    post:
+      tags:
+        - User
+      summary: Upload user profile image
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                profileImage:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Profile image uploaded successfully
+        "400":
+          description: Error uploading profile image
+        "500":
+          description: Internal server error
 
-    /message/get/{receiverId}:
-        get:
-            summary: Get messages between two users
-            tags:
-                - Messages
-            security:
-                - bearerAuth: []
-            parameters:
-                - in: path
-                  name: receiverId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the receiver user
-            responses:
-                "200":
-                    description: List of messages between the users
-                    content:
-                        application/json:
-                            schema:
-                                type: array
-                                items:
-                                    $ref: "#/components/schemas/Message"
-                "400":
-                    description: Validation errors
+  /user/upload-cover-image:
+    post:
+      tags:
+        - User
+      summary: Upload cover image
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                coverImage:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Cover image uploaded successfully
+        "400":
+          description: Error uploading cover image
+        "500":
+          description: Internal server error
 
-    /message/delete/{messageId}:
-        delete:
-            summary: Delete a message
-            tags:
-                - Messages
-            security:
-                - bearerAuth: []
-            parameters:
-                - in: path
-                  name: messageId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the message to delete
-            responses:
-                "200":
-                    description: Message deleted successfully
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-                                        example: "Message deleted"
-                "400":
-                    description: Validation errors
-                "404":
-                    description: Message not found
+  /user/update-profile-details:
+    post:
+      tags:
+        - User
+      summary: Update user profile details
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: Profile updated successfully
+        "500":
+          description: Internal server error
 
-    /message/update/{messageId}:
-        put:
-            summary: Update a message
-            tags:
-                - Messages
-            security:
-                - bearerAuth: []
-            parameters:
-                - in: path
-                  name: messageId
-                  schema:
-                      type: string
-                  required: true
-                  description: ID of the message to update
-            requestBody:
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            type: object
-                            properties:
-                                content:
-                                    type: string
-            responses:
-                "200":
-                    description: Message updated successfully
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-                                        example: "Message updated"
-                "400":
-                    description: Validation errors
-                "404":
-                    description: Message not found
+  /user/add-friend/{userId}:
+    post:
+      tags:
+        - User
+      summary: Add a friend
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: The ID of the friend to add
+      responses:
+        "200":
+          description: Friend added successfully
+        "400":
+          description: Bad request
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
 
-    /message/contacts:
-        get:
-            summary: Get user contacts
-            tags:
-                - Messages
-            security:
-                - bearerAuth: []
-            responses:
-                "200":
-                    description: List of user contacts
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    contacts:
-                                        type: array
-                                        items:
-                                            $ref: "#/components/schemas/UserContact"
-                "401":
-                    description: Unauthorized
-    /user/profile/{userId}:
-        get:
-            tags:
-                - User
-            summary: Get user profile by user ID
-            security:
-                - bearerAuth: []
-            parameters:
-                - in: path
-                  name: userId
-                  schema:
-                      type: string
-                  required: true
-                  description: The ID of the user
-            responses:
-                "200":
-                    description: Successful response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/UserProfileResponse"
-                "400":
-                    description: Bad request
-                "404":
-                    description: User not found
-                "500":
-                    description: Internal server error
-    /user/search-users:
-        get:
-            tags:
-                - User
-            summary: Search users by name
-            security:
-                - bearerAuth: []
-            parameters:
-                - in: query
-                  name: name
-                  schema:
-                      type: string
-                  required: true
-                  description: The name to search for
-            responses:
-                "200":
-                    description: Successful response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/UserSearchResponse"
-                "400":
-                    description: Bad request
-                "500":
-                    description: Internal server error
-    /user/upload-profile-image:
-        post:
-            tags:
-                - User
-            summary: Upload user profile image
-            security:
-                - bearerAuth: []
-            requestBody:
-                required: true
-                content:
-                    multipart/form-data:
-                        schema:
-                            type: object
-                            properties:
-                                profileImage:
-                                    type: string
-                                    format: binary
-            responses:
-                "200":
-                    description: Profile image uploaded successfully
-                "400":
-                    description: Error uploading profile image
-                "500":
-                    description: Internal server error
-    /user/upload-cover-image:
-        post:
-            tags:
-                - User
-            summary: Upload cover image
-            security:
-                - bearerAuth: []
-            requestBody:
-                required: true
-                content:
-                    multipart/form-data:
-                        schema:
-                            type: object
-                            properties:
-                                coverImage:
-                                    type: string
-                                    format: binary
-            responses:
-                "200":
-                    description: Cover image uploaded successfully
-                "400":
-                    description: Error uploading cover image
-                "500":
-                    description: Internal server error
-    /user/update-profile-details:
-        post:
-            tags:
-                - User
-            summary: Update user profile details
-            security:
-                - bearerAuth: []
-            requestBody:
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/UpdateProfileRequest"
-            responses:
-                "200":
-                    description: Profile updated successfully
-                "500":
-                    description: Internal server error
-    /user/add-friend/{userId}:
-        post:
-            tags:
-                - User
-            summary: Add a friend
-            security:
-                - bearerAuth: []
-            parameters:
-                - in: path
-                  name: userId
-                  schema:
-                      type: string
-                  required: true
-                  description: The ID of the friend to add
-            responses:
-                "200":
-                    description: Friend added successfully
-                "400":
-                    description: Bad request
-                "404":
-                    description: User not found
-                "500":
-                    description: Internal server error
-    /user/remove-friend/{userId}:
-        post:
-            tags:
-                - User
-            summary: Remove a friend
-            security:
-                - bearerAuth: []
-            parameters:
-                - in: path
-                  name: userId
-                  schema:
-                      type: string
-                  required: true
-                  description: The ID of the friend to remove
-            responses:
-                "200":
-                    description: Friend removed successfully
-                "400":
-                    description: Bad request
-                "404":
-                    description: User not found
-                "500":
-                    description: Internal server error
-    /user/save-post/{postId}:
-        post:
-            summary: Add a post to saved posts
-            tags:
-                - User
-            parameters:
-                - name: postId
-                  in: path
-                  required: true
-                  schema:
-                      type: string
-                  description: ID of the post to save
-            security:
-                - bearerAuth: []
-            responses:
-                "200":
-                    description: Post saved successfully
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    status:
-                                        type: string
-                                    data:
-                                        type: object
-                "400":
-                    description: Invalid input
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    errors:
-                                        type: array
-                                        items:
-                                            type: object
-                                            properties:
-                                                msg:
-                                                    type: string
-                "404":
-                    description: Post or user not found
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-                "500":
-                    description: Internal server error
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-    /user/unsave-post/{postId}:
-        post:
-            summary: Remove a post from saved posts
-            tags:
-                - User
-            parameters:
-                - name: postId
-                  in: path
-                  required: true
-                  schema:
-                      type: string
-                  description: ID of the post to remove
-            security:
-                - bearerAuth: []
-            responses:
-                "200":
-                    description: Post removed successfully
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    status:
-                                        type: string
-                                    data:
-                                        type: object
-                "400":
-                    description: Invalid input
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    errors:
-                                        type: array
-                                        items:
-                                            type: object
-                                            properties:
-                                                msg:
-                                                    type: string
-                "404":
-                    description: Post or user not found
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-                "500":
-                    description: Internal server error
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-    /user/delete-account:
-        post:
-            summary: Delete own account
-            tags:
-                - User
-            security:
-                - bearerAuth: []
-            responses:
-                "200":
-                    description: Account deleted successfully
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-                "404":
-                    description: User not found
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-                "500":
-                    description: Internal server error
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-    /user/change-password:
-        post:
-            summary: Change user password
-            tags:
-                - User
-            requestBody:
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            type: object
-                            properties:
-                                oldPassword:
-                                    type: string
-                                    description: Old password
-                                newPassword:
-                                    type: string
-                                    description: New password
-                                confirmNewPassword:
-                                    type: string
-                                    description: Confirm new password
-            security:
-                - bearerAuth: []
-            responses:
-                "200":
-                    description: Password changed successfully
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-                "400":
-                    description: Invalid input or password mismatch
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    errors:
-                                        type: array
-                                        items:
-                                            type: object
-                                            properties:
-                                                msg:
-                                                    type: string
-                "404":
-                    description: User not found or invalid password
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
-                "500":
-                    description: Internal server error
-                    content:
-                        application/json:
-                            schema:
-                                type: object
-                                properties:
-                                    message:
-                                        type: string
+  /user/remove-friend/{userId}:
+    post:
+      tags:
+        - User
+      summary: Remove a friend
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: The ID of the friend to remove
+      responses:
+        "200":
+          description: Friend removed successfully
+        "400":
+          description: Bad request
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+
+  /user/save-post/{postId}:
+    post:
+      summary: Add a post to saved posts
+      tags:
+        - User
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the post to save
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Post saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        msg:
+                          type: string
+        "404":
+          description: Post or user not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /user/unsave-post/{postId}:
+    post:
+      summary: Remove a post from saved posts
+      tags:
+        - User
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the post to remove
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Post removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        msg:
+                          type: string
+        "404":
+          description: Post or user not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /user/delete-account:
+    post:
+      summary: Delete own account
+      tags:
+        - User
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Account deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /user/change-password:
+    post:
+      summary: Change user password
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldPassword:
+                  type: string
+                  description: Old password
+                newPassword:
+                  type: string
+                  description: New password
+                confirmNewPassword:
+                  type: string
+                  description: Confirm new password
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          description: Invalid input or password mismatch
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        msg:
+                          type: string
+        "404":
+          description: User not found or invalid password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string

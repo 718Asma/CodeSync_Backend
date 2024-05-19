@@ -3,6 +3,7 @@
 const asyncHandler = require("express-async-handler");
 const { body, param, validationResult } = require("express-validator");
 const Post = require("../models/post");
+const Reply = require("../models/reply");
 const passport = require("passport");
 const { uploadPostImages } = require("../multer");
 
@@ -98,87 +99,158 @@ exports.get_post_by_discussion = [
   }),
 ];
 
-// Like a post
+// Get the number of likes for a post
+exports.get_number_of_likes = async (req, res, next) => {
+  try {
+    const postId = req.params.postId; // Extract post ID from URL params
+    const post = await Post.findById(postId); // Find post by ID
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    const numberOfLikes = post.likes ? post.likes.length : 0;
+    res.status(200).json({ numberOfLikes });
+  } catch (error) {
+    console.error("Error getting number of likes:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Get the number of dislikes for a post
+exports.get_number_of_dislikes = async (req, res, next) => {
+  try {
+    const postId = req.params.postId; // Extract post ID from URL params
+    const post = await Post.findById(postId); // Find post by ID
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    const numberOfDislikes = post.dislikes ? post.dislikes.length : 0;
+    res.status(200).json({ numberOfDislikes });
+  } catch (error) {
+    console.error("Error getting number of dislikes:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 exports.like_post = [
+  // Authenticate user with JWT
   passport.authenticate("jwt", { session: false }),
+
+  // Validate the "postId" parameter
   param("postId").notEmpty().withMessage("Post ID is required"),
+
   asyncHandler(async (req, res, next) => {
     try {
+      // Extract postId and userId from the request
       const postId = req.params.postId;
-      // Increment the likes counter by 1
-      const post = await Post.findByIdAndUpdate(postId, { $inc: { likes: 1 } }, { new: true });
+      const userId = req.user._id;
+
+      // Find the post by its ID
+      const post = await Post.findById(postId);
+
+      // Check if the post exists
       if (!post) {
+        // If post doesn't exist, return a 404 response
         return res.status(404).json({ message: "Post not found" });
       }
-      res.status(200).json(post);
+
+      // Initialize post.likes array if it's undefined
+      if (!post.likes) {
+        post.likes = [];
+      }
+
+      // Check if the user has already liked the post
+      const likeIndex = post.likes.indexOf(userId);
+      if (likeIndex > -1) {
+        // If user has already liked the post, remove the like
+        post.likes.splice(likeIndex, 1);
+      } else {
+        // If user hasn't liked the post, check if they have disliked it
+        const dislikeIndex = post.dislikes ? post.dislikes.indexOf(userId) : -1;
+        if (dislikeIndex > -1) {
+          // If user has disliked the post, remove the dislike
+          post.dislikes.splice(dislikeIndex, 1);
+        }
+        // Add user's like to the post
+        post.likes.push(userId);
+      }
+
+      // Save the updated post
+      await post.save();
+
+      // Send success response with the updated post
+      res.status(200).json({
+        message: "Like status updated successfully",
+        post,
+      });
     } catch (error) {
-      console.error("Error liking post:", error);
-      next(error);
+      // Log and handle errors
+      console.error("Error updating like status:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   }),
 ];
 
-// Un-like a post
-exports.unlike_post = [
-  passport.authenticate("jwt", { session: false }),
-  param("postId").notEmpty().withMessage("Post ID is required"),
-  asyncHandler(async (req, res, next) => {
-    try {
-      const postId = req.params.postId;
-      // Decrement the likes counter by 1
-      const post = await Post.findByIdAndUpdate(postId, { $inc: { likes: -1 } }, { new: true });
-      if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-      }
-      res.status(200).json(post);
-    } catch (error) {
-      console.error("Error un-liking post:", error);
-      next(error);
-    }
-  }),
-];
-
-// Dislike a post
 exports.dislike_post = [
+  // Authenticate user with JWT
   passport.authenticate("jwt", { session: false }),
+
+  // Validate the "postId" parameter
   param("postId").notEmpty().withMessage("Post ID is required"),
+
   asyncHandler(async (req, res, next) => {
     try {
+      // Extract postId and userId from the request
       const postId = req.params.postId;
-      // Increment the dislikes counter by 1
-      const post = await Post.findByIdAndUpdate(postId, { $inc: { dislikes: 1 } }, { new: true });
+      const userId = req.user._id;
+
+      // Find the post by its ID
+      const post = await Post.findById(postId);
+
+      // Check if the post exists
       if (!post) {
+        // If post doesn't exist, return a 404 response
         return res.status(404).json({ message: "Post not found" });
       }
-      res.status(200).json(post);
+
+      // Initialize post.dislikes array if it's undefined
+      if (!post.dislikes) {
+        post.dislikes = [];
+      }
+
+      // Check if the user has already disliked the post
+      const dislikeIndex = post.dislikes.indexOf(userId);
+      if (dislikeIndex > -1) {
+        // If user has already disliked the post, remove the dislike
+        post.dislikes.splice(dislikeIndex, 1);
+      } else {
+        // If user hasn't disliked the post, check if they have liked it
+        const likeIndex = post.likes ? post.likes.indexOf(userId) : -1;
+        if (likeIndex > -1) {
+          // If user has liked the post, remove the like
+          post.likes.splice(likeIndex, 1);
+        }
+        // Add user's dislike to the post
+        post.dislikes.push(userId);
+      }
+
+      // Save the updated post
+      await post.save();
+
+      // Send success response with the updated post
+      res.status(200).json({
+        message: "Dislike status updated successfully",
+        post,
+      });
     } catch (error) {
-      console.error("Error disliking post:", error);
-      next(error);
+      // Log and handle errors
+      console.error("Error updating dislike status:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   }),
 ];
 
-// Un-dislike a post
-exports.undislike_post = [
-  passport.authenticate("jwt", { session: false }),
-  param("postId").notEmpty().withMessage("Post ID is required"),
-  asyncHandler(async (req, res, next) => {
-    try {
-      const postId = req.params.postId;
-      // Decrement the dislikes counter by 1
-      const post = await Post.findByIdAndUpdate(postId, { $inc: { dislikes: -1 } }, { new: true });
-      if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-      }
-      res.status(200).json(post);
-    } catch (error) {
-      console.error("Error un-disliking post:", error);
-      next(error);
-    }
-  }),
-];
 
-// Delete a post
+// Delete a post and its associated replies
 exports.delete_post = [
   // Authenticate user with JWT
   passport.authenticate("jwt", { session: false }),
@@ -209,17 +281,26 @@ exports.delete_post = [
       // Check if the authenticated user is the owner of the post
       if (req.user._id.toString() !== post.owner.toString()) {
         // If the user is not the owner of the post, return a 403 status with a message
-        return res.status(403).json({ message: "Unauthorized to delete this post" });
+        return res
+          .status(403)
+          .json({ message: "Unauthorized to delete this post" });
       }
+
+      // Delete all replies associated with the post
+      const replies = await Reply.deleteMany({ post: postId });
+      console.log(`${replies.deletedCount} replies deleted`);
 
       // Delete the post
       const deletedPost = await Post.findByIdAndDelete(postId);
 
       // Return a success message and the deleted post data
-      res.status(200).json({ message: "Post deleted successfully", post: deletedPost });
+      res.status(200).json({
+        message: "Post and associated replies deleted successfully",
+        post: deletedPost,
+      });
     } catch (error) {
       // Log the error and pass it to the error handler
-      console.error("Error deleting post:", error);
+      console.error("Error deleting post and associated replies:", error);
       next(error);
     }
   }),

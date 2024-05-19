@@ -44,7 +44,6 @@ exports.create_reply = [
   }),
 ];
 
-
 // Controller to get replies by user
 exports.get_replies_by_user = [
   passport.authenticate("jwt", { session: false }),
@@ -97,82 +96,155 @@ exports.get_replies_by_post = [
   }),
 ];
 
-// Like a reply
-exports.like_reply = [
+// Get the number of upvotes for a reply
+exports.get_number_of_upvotes = async (req, res, next) => {
+  try {
+    const replyId = req.params.replyId; // Extract reply ID from URL params
+    const reply = await Reply.findById(replyId); // Find reply by ID
+    if (!reply) {
+      return res.status(404).json({ message: "Reply not found" });
+    }
+    const numberOfUpvotes = reply.upvotes ? reply.upvotes.length : 0;
+    res.status(200).json({ numberOfUpvotes });
+  } catch (error) {
+    console.error("Error getting number of upvotes:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Get the number of downvotes for a reply
+exports.get_number_of_downvotes = async (req, res, next) => {
+  try {
+    const replyId = req.params.replyId; // Extract reply ID from URL params
+    const reply = await Reply.findById(replyId); // Find reply by ID
+    if (!reply) {
+      return res.status(404).json({ message: "Reply not found" });
+    }
+    const numberOfDownvotes = reply.downvotes ? reply.downvotes.length : 0;
+    res.status(200).json({ numberOfDownvotes });
+  } catch (error) {
+    console.error("Error getting number of downvotes:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.upvote_reply = [
+  // Authenticate user with JWT
   passport.authenticate("jwt", { session: false }),
+
+  // Validate the "replyId" parameter
   param("replyId").notEmpty().withMessage("Reply ID is required"),
+
   asyncHandler(async (req, res, next) => {
     try {
+      // Extract replyId and userId from the request
       const replyId = req.params.replyId;
-      // Increment the upvotes counter by 1
-      const reply = await Reply.findByIdAndUpdate(replyId, { $inc: { upvotes: 1 } }, { new: true });
+      const userId = req.user._id;
+
+      // Find the reply by its ID
+      const reply = await Reply.findById(replyId);
+
+      // Check if the reply exists
       if (!reply) {
+        // If reply doesn't exist, return a 404 response
         return res.status(404).json({ message: "Reply not found" });
       }
-      res.status(200).json(reply);
+
+      if(!reply.upvotes)
+      {
+        reply.upvotes = [];
+      }
+
+      // Check if the user has already upvoted the reply
+      const upvoteIndex = reply.upvotes ? reply.upvotes.indexOf(userId) : -1;
+      if (upvoteIndex > -1) {
+        // If user has already upvoted the reply, remove the upvote
+        reply.upvotes.splice(upvoteIndex, 1);
+      } else {
+        // If user hasn't upvoted the reply, check if they have downvoted it
+        const downvoteIndex = reply.downvotes
+          ? reply.downvotes.indexOf(userId)
+          : -1;
+        if (downvoteIndex > -1) {
+          // If user has downvoted the reply, remove the downvote
+          reply.downvotes.splice(downvoteIndex, 1);
+        }
+        // Add user's upvote to the reply
+        reply.upvotes.push(userId);
+      }
+
+      // Save the updated reply
+      await reply.save();
+
+      // Send success response with the updated reply
+      res.status(200).json({
+        message: "Upvote status updated successfully",
+        reply,
+      });
     } catch (error) {
-      console.error("Error liking reply:", error);
-      next(error);
+      // Log and handle errors
+      console.error("Error updating upvote status:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   }),
 ];
 
-// Un-like a reply
-exports.unlike_reply = [
+exports.downvote_reply = [
+  // Authenticate user with JWT
   passport.authenticate("jwt", { session: false }),
-  param("replyId").notEmpty().withMessage("Reply ID is required"),
-  asyncHandler(async (req, res, next) => {
-    try {
-      const replyId = req.params.replyId;
-      // Decrement the upvotes counter by 1
-      const reply = await Reply.findByIdAndUpdate(replyId, { $inc: { upvotes: -1 } }, { new: true });
-      if (!reply) {
-        return res.status(404).json({ message: "Reply not found" });
-      }
-      res.status(200).json(reply);
-    } catch (error) {
-      console.error("Error un-liking reply:", error);
-      next(error);
-    }
-  }),
-];
 
-// Dislike a reply
-exports.dislike_reply = [
-  passport.authenticate("jwt", { session: false }),
+  // Validate the "replyId" parameter
   param("replyId").notEmpty().withMessage("Reply ID is required"),
-  asyncHandler(async (req, res, next) => {
-    try {
-      const replyId = req.params.replyId;
-      // Increment the downvotes counter by 1
-      const reply = await Reply.findByIdAndUpdate(replyId, { $inc: { downvotes: 1 } }, { new: true });
-      if (!reply) {
-        return res.status(404).json({ message: "Reply not found" });
-      }
-      res.status(200).json(reply);
-    } catch (error) {
-      console.error("Error disliking reply:", error);
-      next(error);
-    }
-  }),
-];
 
-// Un-dislike a reply
-exports.undislike_reply = [
-  passport.authenticate("jwt", { session: false }),
-  param("replyId").notEmpty().withMessage("Reply ID is required"),
   asyncHandler(async (req, res, next) => {
     try {
+      // Extract replyId and userId from the request
       const replyId = req.params.replyId;
-      // Decrement the downvotes counter by 1
-      const reply = await Reply.findByIdAndUpdate(replyId, { $inc: { downvotes: -1 } }, { new: true });
+      const userId = req.user._id;
+
+      // Find the reply by its ID
+      const reply = await Reply.findById(replyId);
+
+      // Check if the reply exists
       if (!reply) {
+        // If reply doesn't exist, return a 404 response
         return res.status(404).json({ message: "Reply not found" });
       }
-      res.status(200).json(reply);
+
+      if (!reply.downvotes) {
+        reply.downvotes = [];
+      }
+
+      // Check if the user has already downvoted the reply
+      const downvoteIndex = reply.downvotes
+        ? reply.downvotes.indexOf(userId)
+        : -1;
+      if (downvoteIndex > -1) {
+        // If user has already downvoted the reply, remove the downvote
+        reply.downvotes.splice(downvoteIndex, 1);
+      } else {
+        // If user hasn't downvoted the reply, check if they have upvoted it
+        const upvoteIndex = reply.upvotes ? reply.upvotes.indexOf(userId) : -1;
+        if (upvoteIndex > -1) {
+          // If user has upvoted the reply, remove the upvote
+          reply.upvotes.splice(upvoteIndex, 1);
+        }
+        // Add user's downvote to the reply
+        reply.downvotes.push(userId);
+      }
+
+      // Save the updated reply
+      await reply.save();
+
+      // Send success response with the updated reply
+      res.status(200).json({
+        message: "Downvote status updated successfully",
+        reply,
+      });
     } catch (error) {
-      console.error("Error un-disliking reply:", error);
-      next(error);
+      // Log and handle errors
+      console.error("Error updating downvote status:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   }),
 ];
@@ -208,14 +280,18 @@ exports.delete_reply = [
       // Check if the authenticated user is the creator of the reply
       if (req.user._id.toString() !== reply.owner.toString()) {
         // If the user is not the creator of the reply, return a 403 status with a message
-        return res.status(403).json({ message: "Unauthorized to delete this reply" });
+        return res
+          .status(403)
+          .json({ message: "Unauthorized to delete this reply" });
       }
 
       // Delete the reply
       const deletedReply = await Reply.findByIdAndDelete(replyId);
 
       // Return a success message and the deleted reply data
-      res.status(200).json({ message: "Reply deleted successfully", reply: deletedReply });
+      res
+        .status(200)
+        .json({ message: "Reply deleted successfully", reply: deletedReply });
     } catch (error) {
       // Log the error and pass it to the error handler
       console.error("Error deleting reply:", error);

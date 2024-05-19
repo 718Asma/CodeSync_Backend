@@ -26,6 +26,7 @@ const discussionSchema = new Schema({
     },
 });
 
+
 const Discussion = mongoose.model("discussion", discussionSchema);
 
 module.exports = Discussion;
