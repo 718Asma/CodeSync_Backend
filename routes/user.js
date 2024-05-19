@@ -23,4 +23,16 @@ router.post("/add-friend/:userId", userController.add_friend_post); // userId is
 // Remove a friend by user ID
 router.post("/remove-friend/:userId", userController.remove_friend_post); // userId is the friend's ID
 
+// Add a post to saved posts by post ID
+router.post("/save-post/:postId", userController.save_post_post); // postId is the post's ID
+
+// Delete a post from saved posts by post ID
+router.post("/unsave-post/:postId", userController.unsave_post_post); // postId is the post's ID
+
+// Delete own account
+router.post("/delete-account", userController.delete_account_post);
+
+// Change password
+router.post("/change-password", userController.change_password_post);
+
 module.exports = router;

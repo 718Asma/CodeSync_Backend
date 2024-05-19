@@ -139,6 +139,13 @@ const setupSwagger = (app) => {
                             $ref: "#/components/schemas/UserContact",
                         },
                     },
+                    savedPosts: {
+                        type: "array",
+                        items: {
+                            type: "string",
+                            example: "60a5e41ef7b5d64fc805f8e9",
+                        },
+                    },
                 },
             },
             UserSearchResponse: {

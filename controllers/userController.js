@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const Post = require("../models/post");
 
 const asyncHandler = require("express-async-handler");
 const { uploadProfileImage, uploadCoverImage } = require("../multer");
@@ -8,6 +9,11 @@ require("../strategies/local");
 require("../strategies/jwt");
 
 require("dotenv").config();
+
+const bcrypt = require("bcryptjs");
+const { body, param, validationResult } = require("express-validator");
+
+const salt = process.env.SALT;
 
 // get user data by userId (jwt verification + rediraction if not logged in)
 exports.profile_get = [
@@ -202,7 +208,7 @@ exports.update_profile_post = [
             if (gender) user.gender = gender;
             if (dateOfBirth) user.dateOfBirth = dateOfBirth;
             if (address) user.address = address;
-            // if (email) user.email = email; //TODO: add email verification before updating email
+            if (email) user.email = email;
 
             // Save the updated user object
             await user.save();
@@ -242,14 +248,153 @@ exports.search_users_get = [
     }),
 ];
 
-/* 
-//TODO: implement the following route ( discuss with the team first )
-for the idea of integrating google acc + local acc:
-posts, replies, discussions, reacts(dislikes, likes, upvotes and downvote) ownership will be transferred to the new account
-messages: either they get merged ( might cause issues with the order of messages) or they are lost in the process
-friends: the new account will have the friends of the old account 
-profile info: the new account will have the profile info of the old account
-profile image: the new account will have the profile image of the old account
-profile cover: the new account will have the profile cover of the old account
-naturally, all of the old account data will be deleted
-*/
+exports.save_post_post = [
+    passport.authenticate("jwt", { session: false }),
+    param("postId").isMongoId().withMessage("Invalid post ID format"),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    },
+    asyncHandler(async (req, res) => {
+        const postId = req.params.postId;
+        try {
+            const post = await Post.findById(postId);
+            if (!post) {
+                return res.status(404).json({ message: "Post not found" });
+            }
+            const user = await User.findById(req.user._id);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            user.savedPosts.push(postId);
+            await user.save();
+            return res.status(200).json({
+                status: "success",
+                data: user,
+            });
+        } catch (error) {
+            return res.status(500).json({ message: "Internal server error" });
+        }
+    }),
+];
+
+exports.unsave_post_post = [
+    passport.authenticate("jwt", { session: false }),
+    param("postId").isMongoId().withMessage("Invalid post ID format"),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    },
+    asyncHandler(async (req, res) => {
+        const postId = req.params.postId;
+        try {
+            const post = await Post.findById(postId);
+            if (!post) {
+                return res.status(404).json({ message: "Post not found" });
+            }
+            const user = await User.findById(req.user._id);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            user.savedPosts = user.savedPosts.filter((p) => p != postId);
+            await user.save();
+            return res.status(200).json({
+                status: "success",
+                data: user,
+            });
+        } catch (error) {
+            return res.status(500).json({ message: "Internal server error" });
+        }
+    }),
+];
+
+exports.delete_account_post = [
+    passport.authenticate("jwt", { session: false }),
+    asyncHandler(async (req, res) => {
+        try {
+            const user = await User.findById(req.user._id);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            await User.findByIdAndDelete(req.user._id);
+            return res.status(200).json({ message: "Account deleted" });
+        } catch (error) {
+            return res.status(500).json({ message: "Internal server error" });
+        }
+    }),
+];
+
+exports.change_password_post = [
+    passport.authenticate("jwt", { session: false }),
+    body("oldPassword", "Old password is required").notEmpty().trim().escape(),
+    body(
+        "newPassword",
+        "New Password should consist of a minimum of 8 characters."
+    )
+        .trim()
+        .isLength({ min: 8, max: 100 })
+        .escape()
+        .matches(
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/
+        )
+        .withMessage(
+            "New Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character"
+        ),
+
+    body("confirmNewPassword", "Password confirmation must not be empty.")
+        .trim()
+        .isLength({ min: 8, max: 100 })
+        .escape(),
+
+    body("confirmNewPassword").custom((value, { req }) => {
+        if (value !== req.body.newPassword) {
+            throw new Error(
+                "Password confirmation does not match the new password."
+            );
+        }
+        return true;
+    }),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    },
+    asyncHandler(async (req, res) => {
+        const userId = req.user._id;
+        const { oldPassword, newPassword } = req.body;
+
+        try {
+            const user = await User.findById(userId);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            // check if the old password is correct using bcrypt
+            const isMatch = await bcrypt.compare(oldPassword, user.password);
+            if (!isMatch) {
+                return res.status(400).json({ message: "Invalid password" });
+            }
+            // hash the new password and save it
+            bcrypt.hash(
+                newPassword,
+                parseInt(salt),
+                async (err, hashedPassword) => {
+                    if (err) return next(err);
+                    // otherwise, store hashedPassword in DB
+                    user.password = hashedPassword;
+                    await user.save();
+                }
+            );
+            return res.status(200).json({ message: "Password changed" });
+        } catch (error) {
+            return res.status(500).json({ message: "Internal server error" });
+        }
+    }),
+];

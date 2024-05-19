@@ -22,6 +22,7 @@ const userSchema = new Schema({
     dateOfBirth: { type: Date },
     address: { type: String, maxLength: 200 },
     email: { type: String, maxLength: 100 },
+    savedPosts: [{ type: Schema.Types.ObjectId, ref: "Post" }],
 });
 
 // Virtual for user's URL
