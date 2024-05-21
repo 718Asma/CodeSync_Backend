@@ -17,23 +17,50 @@ function initializeSocket(server) {
         console.log("connect to socket", socket.id);
 
         // Listen for user joining and store their socket ID
+        // socket.on("add-user", (userId) => {
+        //     userSockets.set(userId, socket.id);
+        //     console.log("user added", userId, socket.id);
+        // });
         socket.on("add-user", (userId) => {
             userSockets.set(userId, socket.id);
             console.log("user added", userId, socket.id);
+
+            // Notify the newly connected user of the current online users
+            socket.emit("current-online-users", Array.from(userSockets.keys()));
+
+            // Broadcast to all other users that this user is online
+            socket.broadcast.emit("update-user-status", {
+                userId,
+                status: "online",
+            });
+        });
+
+        socket.on("disconnect", () => {
+            const userId = [...userSockets].find(
+                ([key, value]) => value === socket.id
+            )?.[0];
+            if (userId) {
+                userSockets.delete(userId);
+                io.emit("update-user-status", { userId, status: "offline" });
+            }
         });
 
         // Listen for sending messages
         socket.on("send-msg", (data) => {
             console.log("send-msg", data);
-            console.log(userSockets);
             const recipientSocket = userSockets.get(data.receiver);
-
             if (recipientSocket) {
-                // If recipient is online, emit message event
-                io.to(recipientSocket).emit("msg-receive", data.content);
+                console.log(
+                    "recipientSocket found, emitting msg at:",
+                    recipientSocket
+                );
+                io.to(recipientSocket).emit("msg-receive", {
+                    sender: data.sender,
+                    receiver: data.receiver,
+                    content: data.content,
+                });
                 console.log("msg-receive", data.content);
             } else {
-                // If recipient is not online, you can handle offline message storage or other actions
                 console.log(
                     `User ${data.receiver} is offline. Message not sent.`
                 );

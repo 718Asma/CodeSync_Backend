@@ -11,7 +11,7 @@ require("../strategies/jwt");
 require("dotenv").config();
 
 const bcrypt = require("bcryptjs");
-const { body, param, validationResult } = require("express-validator");
+const { body, param, validationResult, query } = require("express-validator");
 
 const salt = process.env.SALT;
 
@@ -227,6 +227,7 @@ exports.update_profile_post = [
 
 exports.search_users_get = [
     passport.authenticate("jwt", { session: false }),
+    query("name").notEmpty().trim().escape(),
     asyncHandler(async (req, res) => {
         const query = req.query.name;
         if (!query) {
@@ -238,6 +239,13 @@ exports.search_users_get = [
                 { fullName: { $regex: query, $options: "i" } },
                 "_id fullName profileImage"
             );
+            // if current user is in the search results, remove them
+            const currentUserIndex = users.findIndex(
+                (user) => user._id == req.user._id
+            );
+            if (currentUserIndex > -1) {
+                users.splice(currentUserIndex, 1);
+            }
             return res.status(200).json({
                 status: "success",
                 data: users,
