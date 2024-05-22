@@ -222,6 +222,12 @@ exports.update_profile_post = [
         .isLength({ max: 100 })
         .withMessage("Email must be up to 100 characters"),
     asyncHandler(async (req, res) => {
+        // Validate request body
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
         const userId = req.user._id; // Get user ID from passport verification middleware
 
         // Extract updated profile information from request body
