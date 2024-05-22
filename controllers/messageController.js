@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Message = require("../models/message");
 const { body, param, validationResult } = require("express-validator");
 const User = require("../models/user");
+const { OpenAI, Configuration } = require("openai");
 
 const passport = require("passport");
 require("../strategies/local");
@@ -15,6 +16,47 @@ const userExists = async (value) => {
         throw new Error("No user found with this ID");
     }
 };
+
+exports.ai_generate_response = [
+    passport.authenticate("jwt", { session: false }),
+    body("prompt").notEmpty().withMessage("Prompt is required"),
+    body("aiKey").notEmpty().withMessage("AI key is required"),
+    asyncHandler(async (req, res) => {
+        if (validationResult(req).errors.length > 0) {
+            return res
+                .status(400)
+                .json({ message: "Prompt and AI key are required" });
+        }
+
+        const { prompt, aiKey } = req.body;
+
+        // Validate AI key
+        if (!aiKey) {
+            return res.status(400).json({ message: "AI key is required" });
+        }
+
+        // Initialize OpenAI with user's AI key
+
+        let openai = new OpenAI({
+            apiKey: aiKey,
+        });
+        try {
+            // Create chat completion with user's key and prompt
+            console.log("creating chat completion");
+            const response = await openai.chat.completions.create({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+            });
+
+            // Extract and send the first message from GPT response
+            const message = response.data.choices[0].message.content;
+            res.status(200).json({ message });
+        } catch (error) {
+            console.error("Error:", error);
+            res.status(500).json({ message: "Internal server error" });
+        }
+    }),
+];
 
 exports.send_message = [
     passport.authenticate("jwt", { session: false }),

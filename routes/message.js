@@ -22,4 +22,8 @@ router.put("/update/:messageId", messageController.update_message);
 // GET /message/contacts
 router.get("/contacts", messageController.get_user_contacts);
 
+// Route for prompting ai to generate a response
+// POST /message/ai
+router.post("/ai", messageController.ai_generate_response);
+
 module.exports = router;

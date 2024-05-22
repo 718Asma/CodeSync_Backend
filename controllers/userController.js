@@ -52,6 +52,7 @@ exports.profile_get = [
 
 exports.add_friend_post = [
     passport.authenticate("jwt", { session: false }),
+    param("userId").isMongoId().withMessage("Invalid user ID format"),
     asyncHandler(async (req, res, next) => {
         const friendId = req.params.userId;
         if (!friendId) {
@@ -67,6 +68,11 @@ exports.add_friend_post = [
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
             }
+            // check if the user is already a friend
+            if (user.friends.includes(friendId)) {
+                return res.status(400).json({ message: "Already friends" });
+            }
+
             user.friends.push(friendId);
             await user.save();
             return res.status(200).json({
@@ -81,6 +87,7 @@ exports.add_friend_post = [
 
 exports.remove_friend_post = [
     passport.authenticate("jwt", { session: false }),
+    param("userId").isMongoId().withMessage("Invalid user ID format"),
     asyncHandler(async (req, res, next) => {
         const friendId = req.params.userId;
         if (!friendId) {
@@ -178,6 +185,42 @@ exports.uploadCoverImage = [
 
 exports.update_profile_post = [
     passport.authenticate("jwt", { session: false }),
+    body("fullName")
+        .optional()
+        .trim()
+        .isLength({ min: 3, max: 100 })
+        .withMessage("Full name must be between 3 and 100 characters"),
+    body("bio")
+        .optional()
+        .trim()
+        .isLength({ max: 500 })
+        .withMessage("Bio must be up to 500 characters"),
+    body("occupation")
+        .optional()
+        .trim()
+        .isLength({ max: 100 })
+        .withMessage("Occupation must be up to 100 characters"),
+    body("gender")
+        .optional()
+        .trim()
+        .isIn(["Male", "Female", "Other"])
+        .withMessage("Gender must be Male, Female, or Other"),
+    body("dateOfBirth")
+        .optional()
+        .isISO8601()
+        .withMessage("Date of Birth must be a valid date"),
+    body("address")
+        .optional()
+        .trim()
+        .isLength({ max: 200 })
+        .withMessage("Address must be up to 200 characters"),
+    body("email")
+        .optional()
+        .trim()
+        .isEmail()
+        .withMessage("Email must be a valid email address")
+        .isLength({ max: 100 })
+        .withMessage("Email must be up to 100 characters"),
     asyncHandler(async (req, res) => {
         const userId = req.user._id; // Get user ID from passport verification middleware
 
