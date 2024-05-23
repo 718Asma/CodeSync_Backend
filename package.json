@@ -30,6 +30,7 @@
         "passport-google-oauth20": "^2.0.0",
         "passport-jwt": "^4.0.1",
         "passport-local": "^1.0.0",
+        "react-hook-form": "^7.51.5",
         "socket.io": "^4.7.5",
         "swagger-jsdoc": "^6.2.8",
         "swagger-ui-express": "^5.0.0",
