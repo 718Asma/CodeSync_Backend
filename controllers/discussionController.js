@@ -100,6 +100,7 @@ exports.discussion_post = [
                 creator,
                 title,
                 description,
+              participants: [creator],  // Add the creator as a participant
             });
 
             // Check if a file was uploaded
