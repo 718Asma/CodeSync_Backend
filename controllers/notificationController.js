@@ -71,7 +71,9 @@ exports.create_notification_post = [
             "post_like",
             "comment",
             "message",
-            "friend_request",
+            "friend_request_sent",
+            "friend_request_accepted",
+            "friend_request_rejected",
         ].includes(req.body.notificationType)
             ? req.user._id
             : undefined;

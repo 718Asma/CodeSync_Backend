@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
 
 const NotificationType = {
-    FRIEND_REQUEST: "friend_request",
+    FRIEND_REQUEST_SENT: "friend_request_sent",
+    FRIEND_REQUEST_ACCEPTED: "friend_request_accepted",
+    FRIEND_REQUEST_REJECTED: "friend_request_rejected",
     SYSTEM_NOTIFICATION: "system_notification",
     POST_TAG: "post_tag",
     POST_LIKE: "post_like",

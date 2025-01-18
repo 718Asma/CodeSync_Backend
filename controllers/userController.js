@@ -50,78 +50,80 @@ exports.profile_get = [
     }),
 ];
 
-exports.add_friend_post = [
-    passport.authenticate("jwt", { session: false }),
-    param("userId").isMongoId().withMessage("Invalid user ID format"),
-    asyncHandler(async (req, res, next) => {
-        const friendId = req.params.userId;
-        if (!friendId) {
-            // bad request
-            return res.status(400).json({ message: "User ID is required" });
-        }
-        try {
-            const friend = await User.findById(friendId);
-            if (!friend) {
-                return res.status(404).json({ message: "User not found" });
-            }
-            const user = await User.findById(req.user._id);
-            if (!user) {
-                return res.status(404).json({ message: "User not found" });
-            }
-            // check if the user is already a friend
-            if (user.friends.includes(friendId)) {
-                return res.status(400).json({ message: "Already friends" });
-            }
+// exports.add_friend_post = [
+//     passport.authenticate("jwt", { session: false }),
+//     param("userId").isMongoId().withMessage("Invalid user ID format"),
+//     asyncHandler(async (req, res, next) => {
+//         const friendId = req.params.userId;
+//         if (!friendId) {
+//             // bad request
+//             return res.status(400).json({ message: "User ID is required" });
+//         }
+//         try {
+//             const friend = await User.findById(friendId);
+//             if (!friend) {
+//                 return res.status(404).json({ message: "User not found" });
+//             }
+//             const user = await User.findById(req.user._id);
+//             if (!user) {
+//                 return res.status(404).json({ message: "User not found" });
+//             }
+//             // check if the user is already a friend
+//             if (user.friends.includes(friendId)) {
+//                 return res.status(400).json({ message: "Already friends" });
+//             }
 
-            user.friends.push(friendId);
-            friend.friends.push(req.user._id);
-            await Promise.all([user.save(), friend.save()]);
-            // await user.save();
-            return res.status(200).json({
-                status: "success",
-                data: user,
-            });
-        } catch (error) {
-            return res.status(500).json({ message: "Internal server error" });
-        }
-    }),
-];
+//             user.friends.push(friendId);
+//             friend.friends.push(req.user._id);
+//             await Promise.all([user.save(), friend.save()]);
+//             // await user.save();
+//             return res.status(200).json({
+//                 status: "success",
+//                 data: user,
+//             });
+//         } catch (error) {
+//             return res.status(500).json({ message: "Internal server error" });
+//         }
+//     }),
+// ];
 
 exports.remove_friend_post = [
     passport.authenticate("jwt", { session: false }),
     param("userId").isMongoId().withMessage("Invalid user ID format"),
     asyncHandler(async (req, res, next) => {
         const friendId = req.params.userId;
-        if (!friendId) {
-            return res.status(400).json({ message: "User ID is required" });
-        }
 
         try {
+            // Find the friend by ID
             const friend = await User.findById(friendId);
             if (!friend) {
-                return res.status(404).json({ message: "User not found" });
+                return res.status(404).json({ message: "Friend not found" });
             }
 
+            // Find the authenticated user
             const user = await User.findById(req.user._id);
             if (!user) {
                 return res.status(404).json({ message: "Authenticated user not found" });
             }
 
             // Remove friend from the user's friends array
-            user.friends = user.friends.filter((elt) => elt._id != friendId);
-            // Also remove the authenticated user from the friend's friends array
-            friend.friends = friend.friends.filter((elt) => elt._id != user._id);
+            user.friends = user.friends.filter((elt) => elt._id.toString() !== friendId);
 
+            // Also remove the authenticated user from the friend's friends array
+            friend.friends = friend.friends.filter((elt) => elt._id.toString() !== req.user._id.toString());
+
+            // Save the updates
             await user.save();
             await friend.save();
 
             return res.status(200).json({
                 status: "success",
+                message: "Friend removed successfully",
                 data: user,
             });
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ message: "Internal server error" });
+            return res.status(500).json({ message: "Internal server error", error: error.message });
         }
     }),
 ];

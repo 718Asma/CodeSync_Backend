@@ -1,7 +1,9 @@
 const asyncHandler = require('express-async-handler');
 const { body, param, validationResult } = require('express-validator');
 const passport = require('passport');
+
 const FriendRequest = require('../models/friendRequest');
+const User = require("../models/user");
 
 // Send a Friend Request
 exports.send_request_post = [
@@ -23,6 +25,7 @@ exports.send_request_post = [
     const existingRequest = await FriendRequest.findOne({
       sender: senderId,
       receiver: receiverId,
+      status: 'pending'
     });
 
     if (existingRequest) {
@@ -65,7 +68,26 @@ exports.accept_request_post = [
     request.status = 'accepted';
     await request.save();
 
-    res.status(200).json({ message: 'Friend request accepted' });
+    // Add both the receiver and sender as friends
+    const user = await User.findById(userId);
+    const friend = await User.findById(request.sender);
+
+    if (!user || !friend) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if already friends
+    if (user.friends.includes(friend._id)) {
+      return res.status(400).json({ message: "Already friends" });
+    }
+
+    // Add to friends
+    user.friends.push(friend._id);
+    friend.friends.push(user._id);
+
+    await Promise.all([user.save(), friend.save()]);
+
+    res.status(200).json({ message: 'Friend request accepted and friends added!' });
   }),
 ];
 
@@ -106,10 +128,26 @@ exports.get_all_requests_get = [
   asyncHandler(async (req, res) => {
     const userId = req.params.userId;
 
-    const requests = await FriendRequest.find({ receiver: userId, status: 'pending' })
-      .populate('sender');
+    try {
+      // Fetch friend requests where the user is either the sender or the receiver
+      const requests = await FriendRequest.find({
+        $or: [
+          { sender: userId },
+          { receiver: userId }
+        ],
+        status: 'pending'
+      })
+        .populate('sender');
 
-    res.status(200).json(requests);
+      if (requests.length === 0) {
+        return res.status(404).json({ message: 'No pending friend requests found.' });
+      }
+
+      res.status(200).json(requests);
+    } catch (error) {
+      console.error('Error fetching friend requests:', error);
+      res.status(500).json({ message: 'An error occurred while fetching friend requests. Please try again later.' });
+    }
   }),
 ];
 

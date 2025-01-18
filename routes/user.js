@@ -18,7 +18,7 @@ router.post("/upload-cover-image", userController.uploadCoverImage);
 router.post("/update-profile-details", userController.update_profile_post);
 
 // Add a friend by user ID
-router.post("/add-friend/:userId", userController.add_friend_post); // userId is the friend's ID
+// router.post("/add-friend/:userId", userController.add_friend_post); // userId is the friend's ID
 
 // Remove a friend by user ID
 router.post("/remove-friend/:userId", userController.remove_friend_post); // userId is the friend's ID
