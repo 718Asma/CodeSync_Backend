@@ -36,7 +36,9 @@ exports.create_reply = [
       // Save the reply to the database
       await reply.save();
 
-      res.status(201).json({ message: "Reply created successfully", reply });
+      const populatedReply = await reply.populate('owner');
+
+      res.status(201).json({ message: "Reply created successfully", reply: populatedReply });
     } catch (error) {
       console.error("Error creating reply:", error);
       next(error);
@@ -80,7 +82,7 @@ exports.get_replies_by_post = [
       const postId = req.params.postId; // Retrieve post ID from URL params
 
       // Find replies belonging to the specified post
-      const replies = await Reply.find({ post: postId });
+      const replies = await Reply.find({ post: postId }).sort({ timestamp: -1 }).populate("owner");
 
       if (replies.length === 0) {
         return res

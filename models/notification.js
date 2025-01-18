@@ -4,6 +4,9 @@ const NotificationType = {
     FRIEND_REQUEST: "friend_request",
     SYSTEM_NOTIFICATION: "system_notification",
     POST_TAG: "post_tag",
+    POST_LIKE: "post_like",
+    COMMENT: "comment",
+    MESSAGE: "message",
     // More notification types will be added as needed
 };
 
@@ -14,6 +17,10 @@ const notificationSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "User",
         required: true,
+    },
+    triggeredBy: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
     },
     notificationType: {
         type: String,

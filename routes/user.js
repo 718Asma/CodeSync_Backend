@@ -29,6 +29,9 @@ router.post("/save-post/:postId", userController.save_post_post); // postId is t
 // Delete a post from saved posts by post ID
 router.post("/unsave-post/:postId", userController.unsave_post_post); // postId is the post's ID
 
+// Get user's saved posts
+router.get("/saved-posts/", userController.get_saved_posts);
+
 // Delete own account
 router.post("/delete-account", userController.delete_account_post);
 

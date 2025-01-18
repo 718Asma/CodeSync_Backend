@@ -2,6 +2,7 @@
 
 const asyncHandler = require("express-async-handler");
 const Discussion = require("../models/discussion");
+const Post = require("../models/post");
 const { body, query, param, validationResult } = require("express-validator");
 const passport = require("passport");
 const { uploadDiscussionBanner } = require("../multer");
@@ -128,9 +129,25 @@ exports.discussion_post = [
 
 exports.get_discussions = [
     passport.authenticate("jwt", { session: false }),
+    param('per_page').optional().isInt({ min: 1 }).withMessage('per_page must be a positive integer and greater than 0'),
+    param('page').optional().isInt({ min: 0 }).withMessage('page must be a positive integer'),
     asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const perPage = parseInt(req.query.per_page, 10);
+        const page = parseInt(req.query.page, 10);
+
         try {
-            const discussions = await Discussion.find();
+            const discussions = await Discussion.find()
+            .skip((page - 1) * perPage)
+            .limit(perPage);
+
+            if (discussions.length === 0) {
+                return res.status(200).json({ message: "No discussions found" });
+            }
 
             res.status(200).json({ discussions });
         } catch (error) {
@@ -143,11 +160,16 @@ exports.get_discussions = [
 exports.get_discussions_by_user = [
     passport.authenticate("jwt", { session: false }),
     asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
         try {
             const userId = req.user._id; // Extract user ID from JWT payload
 
-            // Find discussions where the specified user is the creator
-            const discussions = await Discussion.find({ creator: userId });
+            // Find discussions where the specified user is one of the participants
+            const discussions = await Discussion.find({ participants: userId });
 
             // If user has discussions, return them
             res.status(200).json({ discussions });
@@ -227,6 +249,43 @@ exports.join_leave_disc = [
             });
         } catch (error) {
             console.error("Error updating participant status:", error);
+            res.status(500).json({ message: "Internal server error" });
+        }
+    }),
+];
+
+exports.delete_discussion = [
+    passport.authenticate("jwt", { session: false }),
+    param("discussionId").notEmpty().withMessage("Discussion ID is required"),
+    asyncHandler(async (req, res, next) => {
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        try {
+            const userId = req.user._id; // Extract user ID from JWT
+            const discussionId = req.params.discussionId; // Extract discussion ID from URL parameter
+            const discussion = await Discussion.findById(discussionId);
+
+            if (!discussion) {
+                return res.status(404).json({ message: "Discussion not found" });
+            }
+
+            if (discussion.creator.toString() !== userId.toString()) {
+                return res.status(403).json({ message: "You are not authorized to delete this discussion" });
+            }
+
+            // Delete posts related to the discussion
+            await Post.deleteMany({ discussionId: discussionId });
+
+            // Delete the discussion itself
+            await Discussion.findByIdAndDelete(discussionId);
+
+            res.status(200).json({ message: "Discussion and related posts deleted successfully" });
+        } catch (error) {
+            console.error("Error deleting discussion:", error);
             res.status(500).json({ message: "Internal server error" });
         }
     }),

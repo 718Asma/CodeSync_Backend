@@ -1,9 +1,10 @@
 // postController.js
+const Post = require("../models/post");
+const Discussion = require("../models/discussion");
+const Reply = require("../models/reply");
 
 const asyncHandler = require("express-async-handler");
 const { body, param, validationResult } = require("express-validator");
-const Post = require("../models/post");
-const Reply = require("../models/reply");
 const passport = require("passport");
 const { uploadPostImages } = require("../multer");
 
@@ -29,7 +30,7 @@ exports.uploadPostImages = [
             }
 
             try {
-                const post = await Post.findById(req.body.postId);
+                const post = await Post.findById(req.body.postId).populate("owner");
                 if (!post) {
                     return res.status(404).json({ message: "post not found" });
                 }
@@ -96,17 +97,87 @@ exports.create_post = [
     }),
 ];
 
-exports.get_post_by_creator = [
+exports.get_posts = [
     passport.authenticate("jwt", { session: false }),
+    param('per_page').optional().isInt({ min: 1 }).withMessage('per_page must be a positive integer and greater than 0'),
+    param('page').optional().isInt({ min: 0 }).withMessage('page must be a positive integer'),
     asyncHandler(async (req, res, next) => {
-        try {
-            const owner = req.user._id; // Extract owner ID from JWT payload
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
 
-            // Find posts where the specified user is the owner
-            const posts = await Post.find({ owner });
+        const perPage = parseInt(req.query.per_page, 10);
+        const page = parseInt(req.query.page, 10);
+
+        try {
+            const posts = await Post.find({})
+            .populate({
+                path: 'owner',
+                populate: {
+                    path: 'friends',
+                    select: 'fullName profileImage'
+                }
+            })
+            .populate('discussionId', 'title banner')
+            .sort({ timestamp: -1 })
+                .skip((page - 1) * perPage)
+                .limit(perPage);
+            const nbPosts = await Post.countDocuments();
 
             if (posts.length === 0) {
-                return res.status(200).json({ message: "User has no posts" });
+                return res.status(200).json({ message: "No posts found" });
+            }
+            res.status(200).json({ posts, nbPosts });
+        } catch (error) {
+            console.error("Error fetching posts:", error);
+            next(error);
+        }
+    }),
+];
+
+exports.get_post_by_creator = [
+    passport.authenticate("jwt", { session: false }),
+    param("userId")
+        .notEmpty()
+        .withMessage("User ID is required")
+        .isMongoId()
+        .withMessage("Invalid User ID format"),
+    param("per_page")
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage("per_page must be a positive integer and greater than 0"),
+    param("page")
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage("page must be a positive integer"),
+    asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { userId } = req.params;
+        const perPage = parseInt(req.query.per_page, 10) || 10; // Default to 10 posts per page
+        const page = parseInt(req.query.page, 10) || 1; // Default to page 1
+
+        try {
+            // Find posts where the specified user is the owner
+            const posts = await Post.find({ owner: userId })
+                .populate({
+                    path: 'owner',
+                    populate: {
+                        path: 'friends',
+                        select: 'fullName profileImage'
+                    }
+                })
+                .populate('discussionId', 'title banner')
+                .sort({ timestamp: -1 })
+                .skip((page - 1) * perPage)
+                .limit(perPage);
+
+            if (posts.length === 0) {
+                return res.status(200).json({ message: `User with ID ${userId} has no posts` });
             }
 
             res.status(200).json({ posts });
@@ -120,12 +191,33 @@ exports.get_post_by_creator = [
 exports.get_post_by_discussion = [
     passport.authenticate("jwt", { session: false }),
     param("discussionId").notEmpty().withMessage("Discussion Id Required"),
+    param('per_page').optional().isInt({ min: 1 }).withMessage('per_page must be a positive integer and greater than 0'),
+    param('page').optional().isInt({ min: 0 }).withMessage('page must be a positive integer'),
     asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const perPage = parseInt(req.query.per_page, 10);
+        const page = parseInt(req.query.page, 10);
+
         try {
             const discussionId = req.params.discussionId; // Retrieve discussion ID from URL params
 
             // Find posts belonging to the specified discussion
-            const posts = await Post.find({ discussionId: discussionId });
+            const posts = await Post.find({ discussionId: discussionId })
+                .populate({
+                    path: 'owner',
+                    populate: {
+                        path: 'friends',
+                        select: 'fullName profileImage'
+                    }
+                })
+                .populate('discussionId', 'title banner')
+                .sort({ timestamp: -1 })
+                .skip((page - 1) * perPage)
+                .limit(perPage);
 
             if (posts.length === 0) {
                 return res
@@ -136,6 +228,84 @@ exports.get_post_by_discussion = [
             res.status(200).json({ posts });
         } catch (error) {
             console.error("Error fetching posts by discussion:", error);
+            next(error);
+        }
+    }),
+];
+
+exports.get_post_by_id = [
+    passport.authenticate("jwt", { session: false }),
+    param("postId").notEmpty().withMessage("Post ID is required"),
+    asyncHandler(async (req, res, next) => {
+        try {
+            const postId = req.params.postId; // Extract post ID from URL params
+            
+            const post = await Post.findById(postId)
+            .populate('discussionId', 'title banner')
+            .populate({
+                path: 'owner',
+                populate: {
+                    path: 'friends',
+                    select: 'fullName profileImage'
+                }
+            }); // Find post by ID
+
+            if (!post) {
+                return res.status(404).json({ message: "Post not found" });
+            }
+            
+            res.status(200).json({ post });
+        } catch (error) {
+            console.error("Error fetching post by ID:", error);
+            next(error);
+        }
+    }),
+];
+
+exports.get_posts_from_participated_discussions = [
+    passport.authenticate("jwt", { session: false }),
+    param('per_page').optional().isInt({ min: 1 }).withMessage('per_page must be a positive integer greater than 0'),
+    param('page').optional().isInt({ min: 1 }).withMessage('page must be a positive integer greater than 0'),
+    asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const perPage = req.query.per_page ? parseInt(req.query.per_page, 10) : 10; // default perPage
+        const page = req.query.page ? parseInt(req.query.page, 10) : 1; // default page
+
+        try {
+            const userId = req.user._id; // Extract user ID from JWT payload
+
+            // Find discussions where the user is a participant
+            const discussions = await Discussion.find({
+                participants: userId,
+            }).select('_id');
+
+            const discussionIds = discussions.map(discussion => discussion._id);
+
+            // Find posts belonging to these discussions
+            const posts = await Post.find({ discussionId: { $in: discussionIds } })
+                .populate({
+                    path: 'owner',
+                    populate: {
+                        path: 'friends',
+                        select: 'fullName profileImage'
+                    }
+                })
+                .populate('discussionId', 'title banner')
+                .sort({ timestamp: -1 })
+                .skip((page - 1) * perPage)
+                .limit(perPage);
+
+            if (posts.length === 0) {
+                return res.status(200).json({ message: "No posts found for the discussions the user participates in" });
+            }
+
+            res.status(200).json({ posts });
+        } catch (error) {
+            console.error("Error fetching posts from participated discussions:", error);
             next(error);
         }
     }),

@@ -55,9 +55,14 @@ function initializeSocket(server) {
                     recipientSocket
                 );
                 io.to(recipientSocket).emit("msg-receive", {
+                    _id: data._id,
                     sender: data.sender,
                     receiver: data.receiver,
                     content: data.content,
+                    date: data.date,
+                    time: data.time,
+                    timestamp: data.timestamp,
+                    lastModified: data.lastModified,
                 });
                 console.log("msg-receive", data.content);
             } else {
@@ -80,6 +85,40 @@ function initializeSocket(server) {
                 // If recipient is not online, you can handle offline notification storage or other actions
                 console.log(
                     `User ${data.receiver} is offline. Notification not sent.`
+                );
+            }
+        });
+
+        // Listen for deleting message
+        socket.on("delete-msg", (data) => {
+            const { messageId, receiver } = data;
+            const recipientSocket = userSockets.get(receiver);
+            if (recipientSocket) {
+                io.to(recipientSocket).emit("delete-msg", messageId);
+            } else {
+                console.log(
+                    `User ${receiver} is offline. Deletion not broadcasted.`
+                );
+            }
+        });
+
+        // Listen for updating message
+        socket.on("update-msg", (data) => {
+            const { messageId, updatedContent } = data;
+            console.log(
+                `Message updated: ${messageId} with content: ${updatedContent}`
+            );
+
+            const recipientSocket = userSockets.get(data.receiver);
+
+            if (recipientSocket) {
+                io.to(recipientSocket).emit("update-msg", {
+                    messageId,
+                    updatedContent,
+                });
+            } else {
+                console.log(
+                    `User ${data.receiver} is offline. Update not broadcasted.`
                 );
             }
         });

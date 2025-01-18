@@ -6,7 +6,7 @@ const postSchema = new Schema({
   owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
   discussionId: {
     type: Schema.Types.ObjectId,
-    ref: "Discussion",
+    ref: "discussion",
     required: true,
   },
   content: { type: String, required: true },

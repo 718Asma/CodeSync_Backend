@@ -74,7 +74,9 @@ exports.add_friend_post = [
             }
 
             user.friends.push(friendId);
-            await user.save();
+            friend.friends.push(req.user._id);
+            await Promise.all([user.save(), friend.save()]);
+            // await user.save();
             return res.status(200).json({
                 status: "success",
                 data: user,
@@ -91,25 +93,34 @@ exports.remove_friend_post = [
     asyncHandler(async (req, res, next) => {
         const friendId = req.params.userId;
         if (!friendId) {
-            // bad request
             return res.status(400).json({ message: "User ID is required" });
         }
+
         try {
             const friend = await User.findById(friendId);
             if (!friend) {
                 return res.status(404).json({ message: "User not found" });
             }
+
             const user = await User.findById(req.user._id);
             if (!user) {
-                return res.status(404).json({ message: "User not found" });
+                return res.status(404).json({ message: "Authenticated user not found" });
             }
-            user.friends = user.friends.filter((f) => f != friendId);
+
+            // Remove friend from the user's friends array
+            user.friends = user.friends.filter((elt) => elt._id != friendId);
+            // Also remove the authenticated user from the friend's friends array
+            friend.friends = friend.friends.filter((elt) => elt._id != user._id);
+
             await user.save();
+            await friend.save();
+
             return res.status(200).json({
                 status: "success",
                 data: user,
             });
         } catch (error) {
+            console.error(error);
             return res.status(500).json({ message: "Internal server error" });
         }
     }),
@@ -366,6 +377,47 @@ exports.unsave_post_post = [
                 data: user,
             });
         } catch (error) {
+            return res.status(500).json({ message: "Internal server error" });
+        }
+    }),
+];
+
+exports.get_saved_posts = [
+    passport.authenticate("jwt", { session: false }),
+    asyncHandler(async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const perPage = parseInt(req.query.per_page);
+        const page = parseInt(req.query.page);
+
+        try {
+            const user = await User.findById(req.user._id)
+                .populate({
+                    path: "savedPosts",
+                    options: {
+                        sort: { timestamp: -1 },
+                        limit: perPage,
+                        skip: (page - 1) * perPage,
+                    },
+                    populate: {
+                        path: "owner",
+                    },
+                })
+                .exec();
+
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            return res.status(200).json({
+                status: "success",
+                data: user.savedPosts,
+            });
+        } catch (error) {
+            console.error("Error retrieving saved posts:", error);
             return res.status(500).json({ message: "Internal server error" });
         }
     }),

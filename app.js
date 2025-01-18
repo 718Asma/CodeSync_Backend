@@ -27,6 +27,9 @@ const messageRouter = require("./routes/message");
 const discussionRouter = require("./routes/discussion");
 const postRouter = require("./routes/post");
 const replyRouter = require("./routes/reply");
+const reportRouter = require("./routes/report");
+const notificationRouter = require("./routes/notification");
+const friendRequestRouter = require("./routes/friendRequest");
 
 // db connection
 const mongoDb = process.env.MONGODB_URI;
@@ -91,6 +94,9 @@ app.use("/message", messageRouter);
 app.use("/discussion", discussionRouter);
 app.use("/post", postRouter);
 app.use("/reply", replyRouter);
+app.use("/report", reportRouter);
+app.use("/notifications", notificationRouter);
+app.use("/friend-requests", friendRequestRouter);
 
 // error handler
 app.use(function (err, req, res, next) {
